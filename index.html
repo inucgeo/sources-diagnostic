@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sources de données pour le diagnostic territorial</title>
+<meta name="description" content="Catalogue interactif de 61 sources en ligne pour le diagnostic territorial : fonds de carte vectoriels et raster, statistiques en open data, accès limités.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6f1e6; --card:#fffcf5; --ink:#22272b; --muted:#5a6268; --hair:#d8cdb6;
+  --teal:#1d6a67; --slate:#3b5560; --terra:#b4502d; --onband:#fff;
+  --serif:'EB Garamond',Garamond,'Times New Roman',serif;
+  --sans:'IBM Plex Sans','Helvetica Neue',Arial,sans-serif;
+}
+:root[data-theme="dark"]{
+  --paper:#1b1f22; --card:#23282c; --ink:#ece7da; --muted:#a3abb0; --hair:#3a4247;
+  --teal:#6cc2bb; --slate:#8fb0bd; --terra:#ee9a76; --onband:#101315;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1b1f22; --card:#23282c; --ink:#ece7da; --muted:#a3abb0; --hair:#3a4247;
+    --teal:#6cc2bb; --slate:#8fb0bd; --terra:#ee9a76; --onband:#101315;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:var(--barh,150px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+a{color:var(--teal)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--terra);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;padding:0 20px}
+header.top{border-top:10px solid var(--teal);padding:22px 0 18px;position:relative}
+.themebtn{position:absolute;right:20px;top:18px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,4.6vw,56px);line-height:1.05;margin:0 0 8px;letter-spacing:-.005em}
+.sub{font-size:clamp(15px,1.6vw,19px);color:var(--muted);margin:0 0 6px;max-width:70ch}
+.ctx{font-size:13px;color:var(--muted);margin:0}
+.intro{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;margin-top:20px}
+.box{border:1px dashed var(--hair);padding:14px 18px;border-radius:2px}
+.box h2{font-family:var(--serif);font-weight:600;font-size:20px;margin:0 0 6px;color:var(--teal)}
+.box p,.box li{margin:0 0 6px;font-size:14px}
+.box ul{margin:0;padding-left:18px}
+/* barre de navigation et filtres */
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--hair);box-shadow:0 6px 10px -10px rgba(0,0,0,.35)}
+.rail{display:flex;gap:0;overflow-x:auto;padding:8px 0 4px;scrollbar-width:thin}
+.rail a{flex:1 1 0;min-width:158px;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);padding:4px 10px 4px 0;font-size:12.5px}
+.rail a .num{font-family:var(--serif);font-size:30px;line-height:1;color:var(--c)}
+.rail a .lab{display:block;font-weight:600;line-height:1.15}
+.rail a .cnt{display:block;font-size:11.5px;color:var(--muted)}
+.rail a:hover .lab{text-decoration:underline}
+.rail a::after{content:"›";color:var(--hair);font-size:22px;margin-left:8px}
+.rail a:last-child::after{content:""}
+.tools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:4px 0 10px}
+.search{flex:1 1 220px;min-width:180px;position:relative}
+.search input{width:100%;font:inherit;padding:8px 12px;border:1px solid var(--hair);background:var(--card);color:var(--ink);border-radius:3px}
+.chipset{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chipset .lbl{font-size:12px;color:var(--muted);margin-right:2px}
+button.chip,.chip{font:600 11.5px/1 var(--sans);padding:6px 10px;border-radius:999px;border:1px solid var(--teal);background:transparent;color:var(--teal);cursor:pointer;letter-spacing:.02em}
+button.chip[aria-pressed="true"]{background:var(--teal);color:var(--paper)}
+button.chip.res{border-color:var(--terra);color:var(--terra)}
+button.chip.res[aria-pressed="true"]{background:var(--terra);color:#fff}
+.btn{font:500 12.5px var(--sans);padding:6px 10px;border:1px solid var(--hair);background:var(--card);color:var(--ink);border-radius:3px;cursor:pointer}
+.btn:hover{border-color:var(--teal)}
+label.chk{font-size:12.5px;display:flex;gap:6px;align-items:center;color:var(--ink)}
+.count{font-size:12.5px;color:var(--muted);margin-left:auto}
+/* groupes et étapes */
+.group{margin:34px 0 0}
+.gband{display:flex;align-items:center;gap:12px;background:var(--gc);color:var(--onband);font-weight:600;font-size:14.5px;padding:8px 18px 8px 14px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%)}
+.step{margin:22px 0 8px}
+.step header{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:end;border-bottom:2px solid var(--c);padding-bottom:10px;margin-bottom:16px}
+.step .big{grid-row:1/3;font-family:var(--serif);font-weight:500;font-size:68px;line-height:.9;color:var(--c)}
+.step h2{font-family:var(--serif);font-weight:600;font-size:clamp(24px,2.6vw,32px);line-height:1.1;margin:0}
+.step .st{color:var(--muted);font-size:13.5px;margin:0}
+.step .q{grid-column:1/3;font-family:var(--serif);font-style:italic;font-size:18px;margin:6px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:12px;align-items:start}
+article.src{background:var(--card);border:1px solid var(--hair);border-left:5px solid var(--c);display:flex;flex-direction:column}
+article.src[hidden]{display:none}
+article.src details{flex:1}
+article.src summary{list-style:none;cursor:pointer;padding:12px 14px 8px 14px;display:block}
+article.src summary::-webkit-details-marker{display:none}
+.hd{display:flex;gap:10px;align-items:baseline}
+.n{font-weight:600;font-size:11.5px;color:var(--c);min-width:20px}
+.t{font-family:var(--serif);font-weight:600;font-size:19px;line-height:1.15}
+.m{font-size:12px;color:var(--muted);margin:3px 0 6px 30px}
+.r{margin:0 0 6px 30px;font-size:14px}
+.lim{margin:0 0 4px 30px;font-family:var(--serif);font-style:italic;font-size:15.5px;color:var(--terra)}
+.lim::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--terra);margin-right:8px;vertical-align:middle}
+.more{margin:6px 0 0 30px;font-size:12px;color:var(--muted)}
+details[open] .more .o{display:none}
+details:not([open]) .more .c{display:none}
+.body{padding:2px 14px 12px 44px;border-top:1px dotted var(--hair)}
+.body dl{margin:10px 0 0;display:grid;grid-template-columns:minmax(110px,32%) 1fr;gap:6px 12px;font-size:13.5px}
+.body dt{color:var(--muted);font-size:12px;text-transform:none;font-weight:600}
+.body dd{margin:0}
+.foot{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:8px 14px 10px 14px;border-top:1px solid var(--hair)}
+.foot .links{flex:1 1 auto;display:flex;flex-wrap:wrap;gap:2px 12px;font-size:13px}
+.foot .links a{font-weight:500;text-decoration-thickness:1px;text-underline-offset:2px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip.s{padding:3px 7px;font-size:10px;cursor:default}
+.chip.s.res{background:var(--terra);border-color:var(--terra);color:#fff}
+.dag{color:var(--terra);font-weight:600;text-decoration:none}
+.empty{display:none;padding:18px;border:1px dashed var(--hair);color:var(--muted);font-size:14px;margin:12px 0}
+.how{background:var(--card);border:1.5px solid var(--terra);padding:16px 20px;margin:0 0 14px}
+.how h3{font-family:var(--serif);font-weight:600;font-size:22px;color:var(--terra);margin:0 0 10px}
+.how ol{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.how li{font-size:13.5px}
+.how li b{display:flex;align-items:center;gap:8px;margin-bottom:3px;font-size:14px}
+.how li b i{font-style:normal;background:var(--terra);color:#fff;width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:12px}
+.legend{margin:36px 0 0;padding:18px 0 40px;border-top:1px solid var(--hair);font-size:13px;color:var(--muted)}
+.legend dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:8px 0 14px;max-width:760px;align-items:center}
+.legend dt{margin:0}.legend dd{margin:0;color:var(--ink)}
+@media (max-width:760px){.themebtn{position:static;margin-bottom:10px}.intro{grid-template-columns:1fr}.body dl{grid-template-columns:1fr}.body dt{margin-top:6px}.step .big{font-size:52px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{
+  .bar{position:static;box-shadow:none}.tools,.rail{display:none}
+  article.src{break-inside:avoid}.grid{grid-template-columns:repeat(2,1fr)}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<button class="btn themebtn" id="theme" type="button" aria-pressed="false">Thème clair ou sombre</button>
+<h1>Où trouver les données d’un diagnostic territorial ?</h1>
+<p class="sub">Du fond de carte à la donnée statistique : un catalogue de sources en ligne, de l’open data aux accès réservés</p>
+<p class="ctx">Masters Ville et environnement urbain · Gestion sociale de l’environnement · Octobre 2026</p>
+<div class="intro">
+<div class="box"><h2>Mode d’emploi</h2><ul>
+<li>La progression suit la logique d’un diagnostic : <b>les fonds de carte</b> (étapes 1 et 2), puis <b>les données statistiques et thématiques en open data</b> (étapes 3 à 6), puis <b>les accès limités</b> (étape 7).</li>
+<li>Chaque fiche se déplie : producteur, adresse, nature, format, mode d’accès, licence, millésime, emprise, système de coordonnées et limites connues.</li>
+<li>Les adresses ont été contrôlées le 20 octobre 2026.</li></ul></div>
+<div class="box"><h2>Points de vigilance communs</h2><ul>
+<li>Associer chaque fond à son millésime avant toute jointure.</li>
+<li>Contrôler le système de coordonnées à l’ouverture : le Lambert-93 est le référentiel métropolitain pour les surfaces.</li>
+<li>Les codes géographiques sont des chaînes de caractères : conserver le zéro initial (01001).</li>
+<li>Vérifier la licence et la citation sur la page du producteur.</li></ul></div>
+</div></div></header>
+<div class="bar"><div class="wrap">
+<nav class="rail" aria-label="Étapes de la progression"><a href="#etape-1" style="--c:var(--teal)"><span class="num">1</span><span><span class="lab">Fonds vectoriels</span><span class="cnt">10 / 10 sources</span></span></a><a href="#etape-2" style="--c:var(--teal)"><span class="num">2</span><span><span class="lab">Fonds raster et grilles</span><span class="cnt">10 / 10 sources</span></span></a><a href="#etape-3" style="--c:var(--slate)"><span class="num">3</span><span><span class="lab">Statistiques de référence</span><span class="cnt">10 / 10 sources</span></span></a><a href="#etape-4" style="--c:var(--slate)"><span class="num">4</span><span><span class="lab">Aménager, habiter, se déplacer</span><span class="cnt">9 / 9 sources</span></span></a><a href="#etape-5" style="--c:var(--slate)"><span class="num">5</span><span><span class="lab">Milieux, risques, ressources</span><span class="cnt">10 / 10 sources</span></span></a><a href="#etape-6" style="--c:var(--slate)"><span class="num">6</span><span><span class="lab">Économie et services locaux</span><span class="cnt">9 / 9 sources</span></span></a><a href="#etape-7" style="--c:var(--terra)"><span class="num">7</span><span><span class="lab">Accès limité</span><span class="cnt">3 / 3 sources</span></span></a></nav>
+<div class="tools">
+<div class="search"><input id="q" type="search" placeholder="Rechercher une source…" aria-label="Rechercher dans le catalogue"></div>
+<div class="chipset" role="group" aria-label="Filtrer par mode d’accès"><span class="lbl">Accès :</span><button type="button" class="chip" data-mode="DL" aria-pressed="false">TÉLÉCH.</button><button type="button" class="chip" data-mode="WS" aria-pressed="false">FLUX</button><button type="button" class="chip" data-mode="API" aria-pressed="false">API</button><button type="button" class="chip" data-mode="VIS" aria-pressed="false">CARTE</button><button type="button" class="chip res" data-mode="RES" aria-pressed="false">RESTREINT</button></div>
+<button class="btn" id="reset" type="button">Réinitialiser</button>
+<button class="btn" id="open-all" type="button">Tout déplier</button>
+<button class="btn" id="close-all" type="button">Tout replier</button>
+<span class="count" id="count" aria-live="polite"></span>
+</div></div></div>
+<main class="wrap">
+<div class="group" style="--gc:var(--teal)"><div class="gband"><span>Étapes 1 et 2</span><span>Les fonds de carte</span><span style="font-weight:400;opacity:.9">vecteur, puis raster</span></div><section class="step" id="etape-1" data-total="10" style="--c:var(--teal)"><header><span class="big">1</span><h2>Fonds vectoriels</h2><p class="st">limites, bâti, parcelles, adresses</p><p class="q">Sur quel découpage et quelles géométries vais-je travailler ?</p></header><div class="grid"><article class="src" id="src-01" data-acces="DL WS" data-ok="1" data-text="ADMIN EXPRESS (IGN) IGN Communes, EPCI, départements, régions : le découpage administratif de référence. Limites administratives communales, intercommunales, départementales et régionales ; versions COG, COG CARTO et COG CARTO PE. Les versions CARTO sont généralisées : à réserver aux cartes de synthèse. Le COG est celui du 1er janvier : vérifier les communes nouvelles avant toute jointure. Formats SIG usuels (archives). Téléchargement Service web">
+<details><summary>
+<div class="hd"><span class="n">01</span><span class="t">ADMIN EXPRESS (IGN)</span></div>
+<div class="m">IGN · formats SIG usuels</div>
+<p class="r">Communes, EPCI, départements, régions : le découpage administratif de référence.</p>
+<p class="lim">Versions CARTO généralisées.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_ADMIN-EXPRESS" target="_blank" rel="noopener">cartes.gouv.fr › ADMIN EXPRESS</a><br><a href="https://data.gouv.fr/en/datasets/admin-express" target="_blank" rel="noopener">data.gouv.fr</a></dd><dt>Nature des données</dt><dd>Limites administratives communales, intercommunales, départementales et régionales ; versions COG, COG CARTO et COG CARTO PE.</dd><dt>Format</dt><dd>Formats SIG usuels (archives).</dd><dt>Mode d’accès</dt><dd>Téléchargement, Service web</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Édition régulière ; le COG est celui du 1er janvier.</dd><dt>Emprise et maille</dt><dd>France entière (métropole et outre-mer).</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Les versions CARTO sont généralisées : à réserver aux cartes de synthèse. Le COG est celui du 1er janvier : vérifier les communes nouvelles avant toute jointure.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_ADMIN-EXPRESS" target="_blank" rel="noopener">cartes.gouv.fr › ADMIN EXPRESS</a> <a href="https://data.gouv.fr/en/datasets/admin-express" target="_blank" rel="noopener">data.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Service web">FLUX</span></div></div>
+</article><article class="src" id="src-02" data-acces="DL" data-ok="1" data-text="Contours IRIS (IGN, Insee) IGN, Insee Mailles infracommunales (IRIS) pour les communes de plus de 10 000 habitants et une partie des plus petites. Découpage infracommunal de la commune en îlots regroupés pour l&#x27;information statistique. Le millésime des IRIS doit correspondre à celui de la donnée statistique jointe. Formats SIG usuels. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">02</span><span class="t">Contours IRIS (IGN, Insee)</span></div>
+<div class="m">IGN, Insee · formats SIG usuels</div>
+<p class="r">Mailles infracommunales (IRIS) pour les communes de plus de 10 000 habitants et une partie des plus petites.</p>
+<p class="lim">Millésime à faire coïncider.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN, Insee</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_CONTOURS-IRIS" target="_blank" rel="noopener">cartes.gouv.fr › Contours IRIS</a></dd><dt>Nature des données</dt><dd>Découpage infracommunal de la commune en îlots regroupés pour l’information statistique.</dd><dt>Format</dt><dd>Formats SIG usuels.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Millésime annuel.</dd><dt>Emprise et maille</dt><dd>France ; IRIS pour les communes de plus de 10 000 habitants et une partie des plus petites.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Le millésime des IRIS doit correspondre à celui de la donnée statistique jointe.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_CONTOURS-IRIS" target="_blank" rel="noopener">cartes.gouv.fr › Contours IRIS</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-03" data-acces="DL" data-ok="1" data-text="Données carroyées Filosofi (Insee) Insee Carreaux de 200 m : population et revenus, hors des limites administratives. Données au carreau de 200 m, y compris données imputées, issues de Filosofi 2021 (revenus perçus en 2021) ; publication du 12 février 2026. Secret statistique : carreaux peu peuplés lissés ou absents (la version « y compris données imputées » traite ce cas) ; maille adaptée aux études de densité, non aux comptages précis. Archives zip : Shapefile (environ 240 Mo), GeoPackage (environ 294 Mo), CSV (environ 87 Mo). Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">03</span><span class="t">Données carroyées Filosofi (Insee)</span></div>
+<div class="m">Insee · Shapefile, GeoPackage, CSV</div>
+<p class="r">Carreaux de 200 m : population et revenus, hors des limites administratives.</p>
+<p class="lim">Secret statistique sur les carreaux.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://www.insee.fr/fr/statistiques/8735162" target="_blank" rel="noopener">insee.fr › Données au carreau de 200 m</a></dd><dt>Nature des données</dt><dd>Données au carreau de 200 m, y compris données imputées, issues de Filosofi 2021 (revenus perçus en 2021) ; publication du 12 février 2026.</dd><dt>Format</dt><dd>Archives zip : Shapefile (environ 240 Mo), GeoPackage (environ 294 Mo), CSV (environ 87 Mo).</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Filosofi 2021 ; autres millésimes sur insee.fr.</dd><dt>Emprise et maille</dt><dd>Carreaux de 200 m ; France métropolitaine, Martinique et La Réunion.</dd><dt>Système de coordonnées</dt><dd>Voir la documentation du fichier (grille INSPIRE en EPSG:3035 et/ou Lambert-93).</dd><dt>Limites connues</dt><dd>Secret statistique : carreaux peu peuplés lissés ou absents (la version « y compris données imputées » traite ce cas) ; maille adaptée aux études de densité, non aux comptages précis.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.insee.fr/fr/statistiques/8735162" target="_blank" rel="noopener">insee.fr › Données au carreau de 200 m</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-04" data-acces="DL" data-ok="1" data-text="Zonages d&#x27;étude : table d&#x27;appartenance géographique des communes (Insee) Insee Appartenance communale : aires d&#x27;attraction, unités urbaines, bassins de vie, zones d&#x27;emploi. Table d&#x27;appartenance géographique des communes : région, département, arrondissement, canton ville, unités urbaines, aires d&#x27;attraction des villes, bassins de vie, zones d&#x27;emploi. C&#x27;est une table sans géométrie : on la joint aux communes d&#x27;ADMIN EXPRESS. Choisir le millésime qui correspond à celui des contours communaux. Archives zip d&#x27;environ 1 Mo (format interne à vérifier à l&#x27;ouverture). Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">04</span><span class="t">Zonages d’étude : table d’appartenance géographique des communes (Insee)</span></div>
+<div class="m">Insee · archives zip (sans géométrie)</div>
+<p class="r">Appartenance communale : aires d’attraction, unités urbaines, bassins de vie, zones d’emploi.</p>
+<p class="lim">Table sans géométrie.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://www.insee.fr/fr/information/7671844" target="_blank" rel="noopener">insee.fr › Table d’appartenance géographique</a></dd><dt>Nature des données</dt><dd>Table d’appartenance géographique des communes : région, département, arrondissement, canton ville, unités urbaines, aires d’attraction des villes, bassins de vie, zones d’emploi.</dd><dt>Format</dt><dd>Archives zip d’environ 1 Mo (format interne à vérifier à l’ouverture).</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Millésime du 1er janvier 2026 (mise à jour du 19 mars 2026) ; millésimes depuis 2008.</dd><dt>Emprise et maille</dt><dd>France, à la commune.</dd><dt>Système de coordonnées</dt><dd>Sans objet (table à joindre aux communes d’ADMIN EXPRESS).</dd><dt>Limites connues</dt><dd>C’est une table sans géométrie : on la joint aux communes d’ADMIN EXPRESS. Choisir le millésime qui correspond à celui des contours communaux.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.insee.fr/fr/information/7671844" target="_blank" rel="noopener">insee.fr › Table d’appartenance géographique</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-05" data-acces="DL WS VIS" data-ok="1" data-text="BD TOPO (IGN) IGN Bâti, routes, voies ferrées, hydrographie, végétation, équipements : la description du territoire. Description vectorielle 3D du territoire : bâti, routes et voies ferrées, hydrographie, végétation, équipements, zones d&#x27;activité. Archives volumineuses ; modèle de données riche à explorer avant usage ; l&#x27;explorateur permet de comprendre la structure sans télécharger. Formats SIG usuels. Téléchargement Service web Consultation">
+<details><summary>
+<div class="hd"><span class="n">05</span><span class="t">BD TOPO (IGN)</span></div>
+<div class="m">IGN · formats SIG usuels, 3D</div>
+<p class="r">Bâti, routes, voies ferrées, hydrographie, végétation, équipements : la description du territoire.</p>
+<p class="lim">Archives volumineuses.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-TOPO" target="_blank" rel="noopener">cartes.gouv.fr › BD TOPO</a><br><a href="https://bdtopoexplorer.ign.fr/" target="_blank" rel="noopener">BD TOPO Explorer</a> <span class="dag" title="Adresse non lisible par les outils de contrôle le 20 octobre 2026 : à ouvrir à la main">†</span></dd><dt>Nature des données</dt><dd>Description vectorielle 3D du territoire : bâti, routes et voies ferrées, hydrographie, végétation, équipements, zones d’activité.</dd><dt>Format</dt><dd>Formats SIG usuels.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Service web, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Mises à jour régulières (continues).</dd><dt>Emprise et maille</dt><dd>France, livraison par département.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Archives volumineuses ; modèle de données riche à explorer avant usage ; l’explorateur permet de comprendre la structure sans télécharger.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-TOPO" target="_blank" rel="noopener">cartes.gouv.fr › BD TOPO</a> <a href="https://bdtopoexplorer.ign.fr/" target="_blank" rel="noopener">BD TOPO Explorer</a> <span class="dag" title="Adresse non lisible par les outils de contrôle le 20 octobre 2026 : à ouvrir à la main">†</span></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Service web">FLUX</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-06" data-acces="DL VIS" data-ok="1" data-text="Cadastre : parcelles et bâtiments (Etalab) Etalab, DGFiP Parcelles, bâtiments, sections, lieux-dits, par commune, EPCI ou département. Version retravaillée par Etalab, centrée sur le découpage parcellaire et les bâtiments, distincte du plan cadastral informatisé au format EDIGÉO ; parcelles, bâtiments, sections, lieux-dits selon la couche choisie. Couverture complète depuis le 1er septembre 2025 ; feuilles juxtaposées sans correction ; plan à vocation fiscale, non juridique. GeoJSON et autres formats SIG. Téléchargement Consultation">
+<details><summary>
+<div class="hd"><span class="n">06</span><span class="t">Cadastre : parcelles et bâtiments (Etalab)</span></div>
+<div class="m">Etalab · formats SIG usuels</div>
+<p class="r">Parcelles, bâtiments, sections, lieux-dits, par commune, EPCI ou département.</p>
+<p class="lim">Plan fiscal, non juridique.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Etalab, DGFiP</dd><dt>Adresse</dt><dd><a href="https://www.data.gouv.fr/datasets/cadastre" target="_blank" rel="noopener">data.gouv.fr/datasets/cadastre</a><br><a href="https://cadastre.data.gouv.fr/" target="_blank" rel="noopener">cadastre.data.gouv.fr</a></dd><dt>Nature des données</dt><dd>Version retravaillée par Etalab, centrée sur le découpage parcellaire et les bâtiments, distincte du plan cadastral informatisé au format EDIGÉO ; parcelles, bâtiments, sections, lieux-dits selon la couche choisie.</dd><dt>Format</dt><dd>GeoJSON et autres formats SIG.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Mises à jour périodiques ; couverture complète depuis le 1er septembre 2025.</dd><dt>Emprise et maille</dt><dd>Commune, EPCI ou département.</dd><dt>Système de coordonnées</dt><dd>Généralement fourni en WGS 84 (EPSG:4326) ; à reprojeter en Lambert-93 avant tout calcul de surface.</dd><dt>Limites connues</dt><dd>Couverture complète depuis le 1er septembre 2025 ; feuilles juxtaposées sans correction ; plan à vocation fiscale, non juridique.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.data.gouv.fr/datasets/cadastre" target="_blank" rel="noopener">data.gouv.fr/datasets/cadastre</a> <a href="https://cadastre.data.gouv.fr/" target="_blank" rel="noopener">cadastre.data.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-07" data-acces="DL" data-ok="1" data-text="Parcellaire Express (IGN) IGN Parcelles et sections dérivées du plan cadastral. Parcelles et sections dérivées du plan cadastral, mises en forme par l&#x27;IGN. Doublon partiel avec le PCI ; retenir une seule des deux sources pour un même diagnostic. Formats SIG usuels. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">07</span><span class="t">Parcellaire Express (IGN)</span></div>
+<div class="m">IGN · formats SIG usuels</div>
+<p class="r">Parcelles et sections dérivées du plan cadastral.</p>
+<p class="lim">Doublon partiel avec le PCI.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_PARCELLAIRE-EXPRESS-PCI" target="_blank" rel="noopener">cartes.gouv.fr › Parcellaire Express</a></dd><dt>Nature des données</dt><dd>Parcelles et sections dérivées du plan cadastral, mises en forme par l’IGN.</dd><dt>Format</dt><dd>Formats SIG usuels.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte (à confirmer sur la fiche du produit).</dd><dt>Millésime et fréquence</dt><dd>À vérifier sur la fiche du produit.</dd><dt>Emprise et maille</dt><dd>France, par département.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Doublon partiel avec le PCI ; retenir une seule des deux sources pour un même diagnostic.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_PARCELLAIRE-EXPRESS-PCI" target="_blank" rel="noopener">cartes.gouv.fr › Parcellaire Express</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-08" data-acces="DL API VIS" data-ok="1" data-text="Adresses extraites du cadastre et Base adresse nationale (Etalab) Etalab Points adresse géolocalisés, par département. Points adresse positionnés ; fichiers par département. Adresses cadastrales parfois fictives ou différentes des adresses postales ; seules les communes au plan vectoriel ont des adresses positionnées. CSV et GeoJSON. Téléchargement API Consultation">
+<details><summary>
+<div class="hd"><span class="n">08</span><span class="t">Adresses extraites du cadastre et Base adresse nationale (Etalab)</span></div>
+<div class="m">Etalab · CSV, GeoJSON</div>
+<p class="r">Points adresse géolocalisés, par département.</p>
+<p class="lim">Base nationale en cours de fiabilisation</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Etalab</dd><dt>Adresse</dt><dd><a href="https://adresse.data.gouv.fr/" target="_blank" rel="noopener">adresse.data.gouv.fr</a><br><a href="https://www.data.gouv.fr/datasets/adresses-extraites-du-cadastre/informations" target="_blank" rel="noopener">data.gouv.fr</a></dd><dt>Nature des données</dt><dd>Points adresse positionnés ; fichiers par département.</dd><dt>Format</dt><dd>CSV et GeoJSON.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Mise à jour continue.</dd><dt>Emprise et maille</dt><dd>France, par département.</dd><dt>Système de coordonnées</dt><dd>WGS 84 (EPSG:4326).</dd><dt>Limites connues</dt><dd>Adresses cadastrales parfois fictives ou différentes des adresses postales ; seules les communes au plan vectoriel ont des adresses positionnées.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://adresse.data.gouv.fr/" target="_blank" rel="noopener">adresse.data.gouv.fr</a> <a href="https://www.data.gouv.fr/datasets/adresses-extraites-du-cadastre/informations" target="_blank" rel="noopener">data.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-09" data-acces="DL" data-ok="1" data-text="BD CARTO (IGN) IGN Réseaux et limites généralisés pour les échelles départementales. Réseaux et limites généralisés ; utile pour les cartes d&#x27;ensemble. Précision inférieure à la BD TOPO ; utile pour les cartes d&#x27;ensemble. Formats SIG usuels. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">09</span><span class="t">BD CARTO (IGN)</span></div>
+<div class="m">IGN · formats SIG usuels</div>
+<p class="r">Réseaux et limites généralisés pour les échelles départementales.</p>
+<p class="lim">Moins précise que la BD TOPO.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-CARTO" target="_blank" rel="noopener">cartes.gouv.fr › BD CARTO</a></dd><dt>Nature des données</dt><dd>Réseaux et limites généralisés ; utile pour les cartes d’ensemble.</dd><dt>Format</dt><dd>Formats SIG usuels.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>À vérifier sur la fiche du produit.</dd><dt>Emprise et maille</dt><dd>France, par département.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Précision inférieure à la BD TOPO ; utile pour les cartes d’ensemble.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-CARTO" target="_blank" rel="noopener">cartes.gouv.fr › BD CARTO</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-10" data-acces="DL API VIS" data-ok="1" data-text="OpenStreetMap Communauté OSM Extractions régionales ou requêtes ciblées, complément des fonds de référence. Données collaboratives : extractions régionales (Geofabrik) ou requêtes ciblées dans le navigateur (Overpass Turbo). Licence ODbL (attribution et partage à l&#x27;identique) ; complétude inégale selon les thèmes ; pas de millésime figé. Geofabrik découpe encore selon les anciennes régions : l&#x27;extraction du Tarn se trouve dans « Midi-Pyrénées ». .osm.pbf, .shp ; GeoJSON par requête. Téléchargement API Consultation">
+<details><summary>
+<div class="hd"><span class="n">10</span><span class="t">OpenStreetMap</span></div>
+<div class="m">Geofabrik, Overpass · .osm.pbf, .shp</div>
+<p class="r">Extractions régionales ou requêtes ciblées, complément des fonds de référence.</p>
+<p class="lim">ODbL ; complétude inégale.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Communauté OSM</dd><dt>Adresse</dt><dd><a href="https://download.geofabrik.de/europe/france.html" target="_blank" rel="noopener">download.geofabrik.de</a><br><a href="https://overpass-turbo.eu/" target="_blank" rel="noopener">overpass-turbo.eu</a></dd><dt>Nature des données</dt><dd>Données collaboratives : extractions régionales (Geofabrik) ou requêtes ciblées dans le navigateur (Overpass Turbo).</dd><dt>Format</dt><dd>.osm.pbf, .shp ; GeoJSON par requête.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API, Consultation</dd><dt>Licence</dt><dd>ODbL (attribution et partage à l’identique).</dd><dt>Millésime et fréquence</dt><dd>Pas de millésime figé.</dd><dt>Emprise et maille</dt><dd>Extraction régionale ou requête sur une emprise.</dd><dt>Système de coordonnées</dt><dd>WGS 84 (EPSG:4326).</dd><dt>Limites connues</dt><dd>Licence ODbL (attribution et partage à l’identique) ; complétude inégale selon les thèmes ; pas de millésime figé. Geofabrik découpe encore selon les anciennes régions : l’extraction du Tarn se trouve dans « Midi-Pyrénées ».</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://download.geofabrik.de/europe/france.html" target="_blank" rel="noopener">download.geofabrik.de</a> <a href="https://overpass-turbo.eu/" target="_blank" rel="noopener">overpass-turbo.eu</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article></div><p class="empty">Aucune source ne correspond aux filtres dans cette étape.</p></section><section class="step" id="etape-2" data-total="10" style="--c:var(--teal)"><header><span class="big">2</span><h2>Fonds raster et grilles</h2><p class="st">imagerie, relief, occupation du sol</p><p class="q">Quelle image du territoire, à quelle résolution ?</p></header><div class="grid"><article class="src" id="src-11" data-acces="WS VIS DL" data-ok="1" data-text="Services de la Géoplateforme (IGN) IGN Orthophotos, Plan IGN, cartes anciennes, couches thématiques : à consulter ou charger en flux. Orthophotographies, Plan IGN, cartes anciennes, couches thématiques ; tuiles et images. Un flux WMTS ou WMS est une image : il ne permet ni mesure précise ni analyse. Des limites d&#x27;usage existent. Les anciennes adresses geoservices.ign.fr et geoportail.gouv.fr redirigent désormais vers cartes.gouv.fr. Tuiles et images ; flux WMTS, WMS-R, WMS-V, WFS. Service web Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">11</span><span class="t">Services de la Géoplateforme (IGN)</span></div>
+<div class="m">IGN · WMTS, WMS, WFS, téléchargement</div>
+<p class="r">Orthophotos, Plan IGN, cartes anciennes, couches thématiques : à consulter ou charger en flux.</p>
+<p class="lim">Un flux est une image.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/aide/fr/guides-utilisateur/rechercher-une-donnee/telechargements-et-flux/" target="_blank" rel="noopener">data.geopf.fr › WMTS</a><br><a href="https://cartes.gouv.fr/" target="_blank" rel="noopener">cartes.gouv.fr</a></dd><dt>Nature des données</dt><dd>Orthophotographies, Plan IGN, cartes anciennes, couches thématiques ; tuiles et images.</dd><dt>Format</dt><dd>Tuiles et images ; flux WMTS, WMS-R, WMS-V, WFS.</dd><dt>Mode d’accès</dt><dd>Service web, Consultation, Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte pour la plupart des couches ; conditions d’usage des services sur geoservices.ign.fr.</dd><dt>Millésime et fréquence</dt><dd>Mise à jour continue selon les couches.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>WMTS en Web Mercator (EPSG:3857) ; WMS et WFS dans plusieurs projections, dont Lambert-93.</dd><dt>Limites connues</dt><dd>Un flux WMTS ou WMS est une image : il ne permet ni mesure précise ni analyse. Des limites d’usage existent. Les anciennes adresses geoservices.ign.fr et geoportail.gouv.fr redirigent désormais vers cartes.gouv.fr.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/aide/fr/guides-utilisateur/rechercher-une-donnee/telechargements-et-flux/" target="_blank" rel="noopener">data.geopf.fr › WMTS</a> <a href="https://cartes.gouv.fr/" target="_blank" rel="noopener">cartes.gouv.fr</a></div><div class="chips"><span class="chip s" title="Service web">FLUX</span><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-12" data-acces="DL" data-ok="1" data-text="BD ORTHO (IGN) IGN Orthophotographies couleur et infrarouge à résolution décimétrique. Orthophotographies couleur et infrarouge ; résolution décimétrique. Très volumineux ; date de prise de vue variable selon les départements et les zones ; à choisir selon l&#x27;objectif d&#x27;échelle. JPEG 2000 ou GeoTIFF. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">12</span><span class="t">BD ORTHO (IGN)</span></div>
+<div class="m">IGN · JPEG 2000, GeoTIFF</div>
+<p class="r">Orthophotographies couleur et infrarouge à résolution décimétrique.</p>
+<p class="lim">Très volumineuse ; dates variables.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-ORTHO" target="_blank" rel="noopener">cartes.gouv.fr › BD ORTHO</a></dd><dt>Nature des données</dt><dd>Orthophotographies couleur et infrarouge ; résolution décimétrique.</dd><dt>Format</dt><dd>JPEG 2000 ou GeoTIFF.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Date de prise de vue variable selon les départements et les zones.</dd><dt>Emprise et maille</dt><dd>France, par département ou par dalle.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Très volumineux ; date de prise de vue variable selon les départements et les zones ; à choisir selon l’objectif d’échelle.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-ORTHO" target="_blank" rel="noopener">cartes.gouv.fr › BD ORTHO</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-13" data-acces="VIS DL" data-ok="1" data-text="BD ORTHO Historique et Remonter le temps (IGN) IGN Photographies aériennes et orthophotos anciennes, comparables d&#x27;une date à l&#x27;autre. Orthophotographies et photographies aériennes anciennes. Géoréférencement hétérogène ; couverture temporelle inégale selon les secteurs. Images, selon les produits. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">13</span><span class="t">BD ORTHO Historique et Remonter le temps (IGN)</span></div>
+<div class="m">IGN · images, comparaison de dates</div>
+<p class="r">Photographies aériennes et orthophotos anciennes, comparables d’une date à l’autre.</p>
+<p class="lim">Couverture temporelle inégale.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://remonterletemps.ign.fr/" target="_blank" rel="noopener">remonterletemps.ign.fr</a></dd><dt>Nature des données</dt><dd>Orthophotographies et photographies aériennes anciennes.</dd><dt>Format</dt><dd>Images, selon les produits.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>À vérifier selon le produit.</dd><dt>Millésime et fréquence</dt><dd>Couverture temporelle inégale selon les secteurs.</dd><dt>Emprise et maille</dt><dd>France, selon les missions aériennes.</dd><dt>Système de coordonnées</dt><dd>Variable ; géoréférencement hétérogène.</dd><dt>Limites connues</dt><dd>Géoréférencement hétérogène ; couverture temporelle inégale selon les secteurs.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://remonterletemps.ign.fr/" target="_blank" rel="noopener">remonterletemps.ign.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-14" data-acces="WS DL" data-ok="1" data-text="Plan IGN IGN Carte multi-échelle en 19 niveaux de zoom, en plusieurs styles dont l&#x27;épuré pour superposer des données. Carte multi-échelle en 19 niveaux de zoom, déclinée en plusieurs styles (standard, classique, épuré, niveaux de gris, toponymes). La version téléchargeable est annuelle et limitée au style standard ; le style « épuré » est conçu pour superposer des données. Tuiles ; version téléchargeable annuelle. Service web Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">14</span><span class="t">Plan IGN</span></div>
+<div class="m">IGN · flux continu, version annuelle</div>
+<p class="r">Carte multi-échelle en 19 niveaux de zoom, en plusieurs styles dont l’épuré pour superposer des données.</p>
+<p class="lim">Version téléchargeable annuelle.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://www.data.gouv.fr/datasets/plan-ign" target="_blank" rel="noopener">data.gouv.fr/datasets/plan-ign</a></dd><dt>Nature des données</dt><dd>Carte multi-échelle en 19 niveaux de zoom, déclinée en plusieurs styles (standard, classique, épuré, niveaux de gris, toponymes).</dd><dt>Format</dt><dd>Tuiles ; version téléchargeable annuelle.</dd><dt>Mode d’accès</dt><dd>Service web, Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Flux continu ; version téléchargeable calculée une fois par an.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>Web Mercator (EPSG:3857) pour les tuiles.</dd><dt>Limites connues</dt><dd>La version téléchargeable est annuelle et limitée au style standard ; le style « épuré » est conçu pour superposer des données.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.data.gouv.fr/datasets/plan-ign" target="_blank" rel="noopener">data.gouv.fr/datasets/plan-ign</a></div><div class="chips"><span class="chip s" title="Service web">FLUX</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-15" data-acces="DL WS" data-ok="1" data-text="BD ALTI et RGE ALTI (IGN) IGN Modèle numérique de terrain : altitude, pente, ombrage. Modèle numérique de terrain en grille, pour calculer pentes, altitudes et ombrages. Pas de bâti ni de végétation : c&#x27;est un modèle de terrain nu, à distinguer d&#x27;un modèle de surface. Grille d&#x27;altitudes (ASC ou GeoTIFF selon le produit). Téléchargement Service web">
+<details><summary>
+<div class="hd"><span class="n">15</span><span class="t">BD ALTI et RGE ALTI (IGN)</span></div>
+<div class="m">IGN · grille d’altitudes</div>
+<p class="r">Modèle numérique de terrain : altitude, pente, ombrage.</p>
+<p class="lim">Terrain nu : ni bâti ni végétation.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_RGE-ALTI" target="_blank" rel="noopener">cartes.gouv.fr › RGE ALTI</a></dd><dt>Nature des données</dt><dd>Modèle numérique de terrain en grille, pour calculer pentes, altitudes et ombrages.</dd><dt>Format</dt><dd>Grille d’altitudes (ASC ou GeoTIFF selon le produit).</dd><dt>Mode d’accès</dt><dd>Téléchargement, Service web</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>À vérifier sur la fiche du produit.</dd><dt>Emprise et maille</dt><dd>France, par dalle ; calculs d’altitude par service.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Pas de bâti ni de végétation : c’est un modèle de terrain nu, à distinguer d’un modèle de surface.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_RGE-ALTI" target="_blank" rel="noopener">cartes.gouv.fr › RGE ALTI</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Service web">FLUX</span></div></div>
+</article><article class="src" id="src-16" data-acces="DL" data-ok="1" data-text="LiDAR HD (IGN) IGN Nuages de points et modèles dérivés : terrain, surface, hauteur de végétation. Nuages de points et modèles dérivés (terrain, surface, hauteur de végétation). Couverture et millésimes à vérifier ; fichiers très lourds. Nuages de points ; rasters dérivés. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">16</span><span class="t">LiDAR HD (IGN)</span></div>
+<div class="m">IGN · nuages de points, modèles dérivés</div>
+<p class="r">Nuages de points et modèles dérivés : terrain, surface, hauteur de végétation.</p>
+<p class="lim">Fichiers très lourds.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_NUAGES-DE-POINTS-LIDAR-HD" target="_blank" rel="noopener">cartes.gouv.fr › LiDAR HD</a></dd><dt>Nature des données</dt><dd>Nuages de points et modèles dérivés (terrain, surface, hauteur de végétation).</dd><dt>Format</dt><dd>Nuages de points ; rasters dérivés.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Couverture et millésimes à vérifier.</dd><dt>Emprise et maille</dt><dd>France, par dalle.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Couverture et millésimes à vérifier ; fichiers très lourds.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_NUAGES-DE-POINTS-LIDAR-HD" target="_blank" rel="noopener">cartes.gouv.fr › LiDAR HD</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-17" data-acces="DL" data-ok="1" data-text="CORINE Land Cover (SDES, Copernicus) SDES, Copernicus Occupation du sol en 44 postes, millésimes 1990 à 2018, statistiques communales. Occupation du sol en 44 postes ; millésimes 1990, 2000, 2006, 2012 et 2018 ; vecteur et raster ; statistiques communales. Échelle de production au 1/100 000 : adaptée aux études régionales ou départementales, non à l&#x27;échelle communale. Vérifier si un millésime plus récent est publié. Vecteur et raster ; tableaux. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">17</span><span class="t">CORINE Land Cover (SDES, Copernicus)</span></div>
+<div class="m">SDES · vecteur et raster</div>
+<p class="r">Occupation du sol en 44 postes, millésimes 1990 à 2018, statistiques communales.</p>
+<p class="lim">Échelle 1/100 000.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>SDES, Copernicus</dd><dt>Adresse</dt><dd><a href="https://www.statistiques.developpement-durable.gouv.fr/corine-land-cover-0" target="_blank" rel="noopener">statistiques.developpement-durable.gouv.fr</a><br><a href="https://land.copernicus.eu/en/products/corine-land-cover" target="_blank" rel="noopener">land.copernicus.eu</a></dd><dt>Nature des données</dt><dd>Occupation du sol en 44 postes ; millésimes 1990, 2000, 2006, 2012 et 2018 ; vecteur et raster ; statistiques communales.</dd><dt>Format</dt><dd>Vecteur et raster ; tableaux.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Diffusion libre (à confirmer sur la fiche).</dd><dt>Millésime et fréquence</dt><dd>1990, 2000, 2006, 2012, 2018 ; vérifier si un millésime plus récent est publié.</dd><dt>Emprise et maille</dt><dd>France et Europe.</dd><dt>Système de coordonnées</dt><dd>Selon le fichier ; Lambert-93 pour la diffusion nationale (à vérifier).</dd><dt>Limites connues</dt><dd>Échelle de production au 1/100 000 : adaptée aux études régionales ou départementales, non à l’échelle communale. Vérifier si un millésime plus récent est publié.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.statistiques.developpement-durable.gouv.fr/corine-land-cover-0" target="_blank" rel="noopener">statistiques.developpement-durable.gouv.fr</a> <a href="https://land.copernicus.eu/en/products/corine-land-cover" target="_blank" rel="noopener">land.copernicus.eu</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-18" data-acces="DL" data-ok="1" data-text="Occupation du sol OSO (Theia, CESBIO) Theia, CESBIO Occupation du sol annuelle à 10 m, issue de Sentinel-2. Occupation du sol annuelle en raster à 10 m, issue de l&#x27;imagerie Sentinel-2. Nomenclature simplifiée ; précision variable selon les classes. Téléchargement après inscription (à vérifier). Raster. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">18</span><span class="t">Occupation du sol OSO (Theia, CESBIO)</span></div>
+<div class="m">Theia · raster 10 m</div>
+<p class="r">Occupation du sol annuelle à 10 m, issue de Sentinel-2.</p>
+<p class="lim">Précision variable selon les classes.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Theia, CESBIO</dd><dt>Adresse</dt><dd><a href="https://catalogue.theia.data-terra.org/?search=oso" target="_blank" rel="noopener">theia-land.fr</a></dd><dt>Nature des données</dt><dd>Occupation du sol annuelle en raster à 10 m, issue de l’imagerie Sentinel-2.</dd><dt>Format</dt><dd>Raster.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>À vérifier sur la fiche du produit.</dd><dt>Millésime et fréquence</dt><dd>Annuel.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>À vérifier sur la fiche du produit.</dd><dt>Limites connues</dt><dd>Nomenclature simplifiée ; précision variable selon les classes. Téléchargement après inscription (à vérifier).</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://catalogue.theia.data-terra.org/?search=oso" target="_blank" rel="noopener">theia-land.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-19" data-acces="VIS DL" data-ok="1" data-text="Imagerie Sentinel-2 (Copernicus) ESA, Copernicus Images satellitaires multispectrales à 10 m, pour un public averti. Images satellitaires multispectrales à 10 m. Usage réservé à un public averti : prétraitements nécessaires. Consultation et téléchargement après création d&#x27;un compte. Produits SAFE, JPEG 2000. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">19</span><span class="t">Imagerie Sentinel-2 (Copernicus)</span></div>
+<div class="m">Copernicus · images multispectrales 10 m</div>
+<p class="r">Images satellitaires multispectrales à 10 m, pour un public averti.</p>
+<p class="lim">Prétraitements nécessaires.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>ESA, Copernicus</dd><dt>Adresse</dt><dd><a href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">browser.dataspace.copernicus.eu</a></dd><dt>Nature des données</dt><dd>Images satellitaires multispectrales à 10 m.</dd><dt>Format</dt><dd>Produits SAFE, JPEG 2000.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>Accès libre et gratuit (compte nécessaire).</dd><dt>Millésime et fréquence</dt><dd>Acquisitions répétées (revisite de quelques jours).</dd><dt>Emprise et maille</dt><dd>Mondiale, par tuile.</dd><dt>Système de coordonnées</dt><dd>UTM, selon la tuile.</dd><dt>Limites connues</dt><dd>Usage réservé à un public averti : prétraitements nécessaires. Consultation et téléchargement après création d’un compte.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">browser.dataspace.copernicus.eu</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-20" data-acces="VIS DL" data-ok="1" data-text="Cartes anciennes : Cassini, état-major, cadastre napoléonien IGN, BnF, archives Cassini, état-major, cadastre napoléonien : images à géoréférencer. Images numérisées de cartes et de plans (Cassini, état-major, cadastre napoléonien). Images non géoréférencées dans la plupart des cas : le géoréférencement est à réaliser dans le SIG. Images ; BD CARTO État-major sur la Géoplateforme. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">20</span><span class="t">Cartes anciennes : Cassini, état-major, cadastre napoléonien</span></div>
+<div class="m">Images numérisées</div>
+<p class="r">Cassini, état-major, cadastre napoléonien : images à géoréférencer.</p>
+<p class="lim">Rarement géoréférencées.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN, BnF, archives</dd><dt>Adresse</dt><dd><a href="https://remonterletemps.ign.fr/" target="_blank" rel="noopener">remonterletemps.ign.fr</a></dd><dt>Nature des données</dt><dd>Images numérisées de cartes et de plans (Cassini, état-major, cadastre napoléonien).</dd><dt>Format</dt><dd>Images ; BD CARTO État-major sur la Géoplateforme.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>Variable selon le fonds.</dd><dt>Millésime et fréquence</dt><dd>Siècles variables selon les séries.</dd><dt>Emprise et maille</dt><dd>France, selon les séries.</dd><dt>Système de coordonnées</dt><dd>Aucun dans la plupart des cas.</dd><dt>Limites connues</dt><dd>Images non géoréférencées dans la plupart des cas : le géoréférencement est à réaliser dans le SIG.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://remonterletemps.ign.fr/" target="_blank" rel="noopener">remonterletemps.ign.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article></div><p class="empty">Aucune source ne correspond aux filtres dans cette étape.</p></section></div><div class="group" style="--gc:var(--slate)"><div class="gband"><span>Étapes 3 à 6</span><span>Les données statistiques et thématiques</span><span style="font-weight:400;opacity:.9">open data en priorité</span></div><section class="step" id="etape-3" data-total="10" style="--c:var(--slate)"><header><span class="big">3</span><h2>Statistiques de référence</h2><p class="st">population, logement, équipements</p><p class="q">Quels chiffres, à quelle maille, à quelle date ?</p></header><div class="grid"><article class="src" id="src-21" data-acces="DL" data-ok="1" data-text="Recensement de la population : bases de données (Insee) Insee Population, ménages, logements, diplômes, activité, mobilités ; communes et IRIS. Population, ménages, logements, diplômes, activité, mobilités ; communes et IRIS. Les résultats du RP 2022 sont diffusés en géographie 2025 : les communes nouvelles modifient les séries. Le recensement est une moyenne glissante sur cinq ans. CSV, XLSX, parquet. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">21</span><span class="t">Recensement de la population : bases de données (Insee)</span></div>
+<div class="m">Insee · CSV, XLSX, parquet</div>
+<p class="r">Population, ménages, logements, diplômes, activité, mobilités ; communes et IRIS.</p>
+<p class="lim">Moyenne glissante sur cinq ans.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://www.insee.fr/fr/information/8568899" target="_blank" rel="noopener">insee.fr/fr/information/8568899</a></dd><dt>Nature des données</dt><dd>Population, ménages, logements, diplômes, activité, mobilités ; communes et IRIS.</dd><dt>Format</dt><dd>CSV, XLSX, parquet.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Annuel ; RP 2022 diffusé en géographie 2025.</dd><dt>Emprise et maille</dt><dd>Commune, IRIS.</dd><dt>Système de coordonnées</dt><dd>Sans objet (tables à joindre aux fonds par le code géographique).</dd><dt>Limites connues</dt><dd>Les résultats du RP 2022 sont diffusés en géographie 2025 : les communes nouvelles modifient les séries. Le recensement est une moyenne glissante sur cinq ans.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.insee.fr/fr/information/8568899" target="_blank" rel="noopener">insee.fr/fr/information/8568899</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-22" data-acces="DL" data-ok="1" data-text="Fichiers détail du recensement (Insee) Insee Individus et ménages localisés à l&#x27;IRIS (d&#x27;au moins 200 habitants) ; à traiter sous R. Individus et ménages localisés au canton-ou-ville et à l&#x27;IRIS (IRIS d&#x27;au moins 200 habitants). Volumineux : à traiter dans un logiciel statistique (R, par exemple). La géographie est celle de production (1er janvier 2024 pour le RP 2022), différente de celle des tables diffusées. Fichier national en parquet (environ 490 Mo) ou CSV (environ 510 Mo) ; fichiers régionaux en CSV. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">22</span><span class="t">Fichiers détail du recensement (Insee)</span></div>
+<div class="m">Insee · parquet, CSV</div>
+<p class="r">Individus et ménages localisés à l’IRIS (d’au moins 200 habitants) ; à traiter sous R.</p>
+<p class="lim">Volumineux (environ 500 Mo).</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://www.insee.fr/fr/statistiques/8647104" target="_blank" rel="noopener">insee.fr/fr/statistiques/8647104</a></dd><dt>Nature des données</dt><dd>Individus et ménages localisés au canton-ou-ville et à l’IRIS (IRIS d’au moins 200 habitants).</dd><dt>Format</dt><dd>Fichier national en parquet (environ 490 Mo) ou CSV (environ 510 Mo) ; fichiers régionaux en CSV.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Géographie de production (1er janvier 2024 pour le RP 2022).</dd><dt>Emprise et maille</dt><dd>Canton-ou-ville, IRIS.</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>Volumineux : à traiter dans un logiciel statistique (R, par exemple). La géographie est celle de production (1er janvier 2024 pour le RP 2022), différente de celle des tables diffusées.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.insee.fr/fr/statistiques/8647104" target="_blank" rel="noopener">insee.fr/fr/statistiques/8647104</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-23" data-acces="DL API VIS" data-ok="1" data-text="Catalogue de données et API Mélodi (Insee) Insee Jeux de données harmonisés, explorateur de tableaux, API et package R melodi. Jeux de données harmonisés ; explorateur de tableaux ; export CSV ou TSV. API limitée à 30 requêtes par minute (erreur 429 au-delà) ; les libellés de variables peuvent différer de ceux d&#x27;insee.fr. CSV, TSV ; API ; package R melodi. Téléchargement API Consultation">
+<details><summary>
+<div class="hd"><span class="n">23</span><span class="t">Catalogue de données et API Mélodi (Insee)</span></div>
+<div class="m">Insee · CSV, TSV, API, package R</div>
+<p class="r">Jeux de données harmonisés, explorateur de tableaux, API et package R melodi.</p>
+<p class="lim">API limitée à 30 requêtes par minute.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://catalogue-donnees.insee.fr/" target="_blank" rel="noopener">catalogue-donnees.insee.fr</a><br><a href="https://stat.ethz.ch/CRAN/web/packages/melodi/readme/README.html" target="_blank" rel="noopener">package R melodi (CRAN)</a></dd><dt>Nature des données</dt><dd>Jeux de données harmonisés ; explorateur de tableaux ; export CSV ou TSV.</dd><dt>Format</dt><dd>CSV, TSV ; API ; package R melodi.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Selon les jeux de données.</dd><dt>Emprise et maille</dt><dd>Variable selon les jeux.</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>API limitée à 30 requêtes par minute (erreur 429 au-delà) ; les libellés de variables peuvent différer de ceux d’insee.fr.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://catalogue-donnees.insee.fr/" target="_blank" rel="noopener">catalogue-donnees.insee.fr</a> <a href="https://stat.ethz.ch/CRAN/web/packages/melodi/readme/README.html" target="_blank" rel="noopener">package R melodi (CRAN)</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-24" data-acces="VIS DL" data-ok="1" data-text="Statistiques locales et cartographie infracommunale (Insee) Insee Indicateurs cartographiés à la commune, à l&#x27;IRIS et au carreau. Indicateurs cartographiés à l&#x27;échelle de la commune, de l&#x27;IRIS et du carreau. Outil de consultation : la donnée exportée est une sélection d&#x27;indicateurs, non la base complète. Export de tableaux. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">24</span><span class="t">Statistiques locales et cartographie infracommunale (Insee)</span></div>
+<div class="m">Insee · consultation, export</div>
+<p class="r">Indicateurs cartographiés à la commune, à l’IRIS et au carreau.</p>
+<p class="lim">Sélection d’indicateurs, non la base.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://statistiques-locales.insee.fr/" target="_blank" rel="noopener">statistiques-locales.insee.fr</a><br><a href="https://www.insee.fr/fr/outil-interactif/7737357/map.html" target="_blank" rel="noopener">carte interactive</a></dd><dt>Nature des données</dt><dd>Indicateurs cartographiés à l’échelle de la commune, de l’IRIS et du carreau.</dd><dt>Format</dt><dd>Export de tableaux.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Selon les indicateurs.</dd><dt>Emprise et maille</dt><dd>Commune, IRIS, carreau.</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>Outil de consultation : la donnée exportée est une sélection d’indicateurs, non la base complète.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://statistiques-locales.insee.fr/" target="_blank" rel="noopener">statistiques-locales.insee.fr</a> <a href="https://www.insee.fr/fr/outil-interactif/7737357/map.html" target="_blank" rel="noopener">carte interactive</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-25" data-acces="DL" data-ok="1" data-text="Base permanente des équipements (Insee) Insee Commerces, services, enseignement, santé, sports, transports ; fichier-détail géolocalisé. Commerces, services, enseignement, santé, sports, transports ; dénombrements par commune et IRIS ; fichier-détail géolocalisé. Deux millésimes ne sont pas immédiatement comparables ; une base « en évolution 2019-2024 » existe pour 150 types d&#x27;équipements, avec précautions d&#x27;utilisation. Qualité de géolocalisation variable selon le fournisseur. CSV, XLSX. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">25</span><span class="t">Base permanente des équipements (Insee)</span></div>
+<div class="m">Insee · CSV, XLSX</div>
+<p class="r">Commerces, services, enseignement, santé, sports, transports ; fichier-détail géolocalisé.</p>
+<p class="lim">Deux millésimes peu comparables.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href=https://www.insee.fr/fr/statistiques/8217535?sommaire=8217537 target="_blank" rel="noopener">insee.fr›BPE</a><br><a href="https://www.insee.fr/fr/metadonnees/source/operation/s2216" target="_blank" rel="noopener">métadonnées</a></dd><dt>Nature des données</dt><dd>Commerces, services, enseignement, santé, sports, transports ; dénombrements par commune et IRIS ; fichier-détail géolocalisé.</dd><dt>Format</dt><dd>CSV, XLSX.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Annuel ; base « en évolution 2019-2024 » pour 150 types d’équipements.</dd><dt>Emprise et maille</dt><dd>Commune, IRIS ; équipements géolocalisés.</dd><dt>Système de coordonnées</dt><dd>Selon le fichier-détail.</dd><dt>Limites connues</dt><dd>Deux millésimes ne sont pas immédiatement comparables ; une base « en évolution 2019-2024 » existe pour 150 types d’équipements, avec précautions d’utilisation. Qualité de géolocalisation variable selon le fournisseur.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.data.gouv.fr/datasets/base-permanente-des-equipements-1/informations" target="_blank" rel="noopener">data.gouv.fr › BPE</a> <a href="https://www.insee.fr/fr/metadonnees/source/operation/s2216" target="_blank" rel="noopener">insee.fr, opération s2216</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-26" data-acces="DL VIS API" data-ok="1" data-text="Base Sirene (Insee) Insee Établissements et entreprises : activité, tranche d&#x27;effectif, adresse. Établissements et entreprises, activité, effectif, adresse. L&#x27;effectif est une tranche, non un nombre ; certains établissements non diffusibles ; géolocalisation à contrôler. CSV. Téléchargement Consultation API">
+<details><summary>
+<div class="hd"><span class="n">26</span><span class="t">Base Sirene (Insee)</span></div>
+<div class="m">Insee · CSV, annuaire en ligne</div>
+<p class="r">Établissements et entreprises : activité, tranche d’effectif, adresse.</p>
+<p class="lim">Effectif en tranches.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://www.insee.fr/fr/information/3591226" target="_blank" rel="noopener">insee-SIRENE</a></dd><dt>Nature des données</dt><dd>Établissements et entreprises, activité, effectif, adresse.</dd><dt>Format</dt><dd>CSV.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation, API</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Mise à jour fréquente.</dd><dt>Emprise et maille</dt><dd>France, établissement.</dd><dt>Système de coordonnées</dt><dd>À vérifier selon le fichier de géolocalisation.</dd><dt>Limites connues</dt><dd>L’effectif est une tranche, non un nombre ; certains établissements non diffusibles ; géolocalisation à contrôler.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.insee.fr/fr/information/3591226" target="_blank" rel="noopener">insee-SIRENE</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-27" data-acces="DL VIS" data-ok="1" data-text="Sitadel, construction de logements (SDES) SDES Logements autorisés et commencés par type de logement. Logements autorisés et commencés par type (individuel pur, groupé, collectif, résidence) ; export via un explorateur. Depuis mars 2026, Sitadel3 remplace Sitadel2 et les données ne sont d&#x27;abord disponibles qu&#x27;à partir de 2013. Autorisé n&#x27;équivaut ni à commencé ni à achevé. Format au choix à l&#x27;export. Téléchargement Consultation">
+<details><summary>
+<div class="hd"><span class="n">27</span><span class="t">Sitadel, construction de logements (SDES)</span></div>
+<div class="m">SDES · export via explorateur</div>
+<p class="r">Logements autorisés et commencés par type de logement.</p>
+<p class="lim">Autorisé ≠ commencé ≠ achevé.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>SDES</dd><dt>Adresse</dt><dd><a href="https://www.statistiques.developpement-durable.gouv.fr/construction-de-logements-resultats-fin-mai-2026-france-entiere" target="_blank" rel="noopener">statistiques.developpement-durable.gouv.fr</a></dd><dt>Nature des données</dt><dd>Logements autorisés et commencés par type (individuel pur, groupé, collectif, résidence) ; export via un explorateur.</dd><dt>Format</dt><dd>Format au choix à l’export.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Sitadel3 depuis mars 2026 ; données d’abord disponibles à partir de 2013.</dd><dt>Emprise et maille</dt><dd>France ; données communales.</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>Depuis mars 2026, Sitadel3 remplace Sitadel2 et les données ne sont d’abord disponibles qu’à partir de 2013. Autorisé n’équivaut ni à commencé ni à achevé.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.statistiques.developpement-durable.gouv.fr/construction-de-logements-resultats-fin-mai-2026-france-entiere" target="_blank" rel="noopener">statistiques.developpement-durable.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-28" data-acces="VIS DL" data-ok="1" data-text="Demandes de valeurs foncières, DVF (DGFiP, Etalab) DGFiP, Etalab Transactions immobilières issues des actes notariés, carte et fichiers par commune. Transactions immobilières et foncières issues des actes notariés ; carte interactive et fichiers CSV par commune ou département. Alsace-Moselle et Mayotte exclues. Une mutation peut regrouper plusieurs biens : le prix au m² exige un nettoyage. DVF+ du Cerema est structuré en base mais DV3F reste réservé aux ayants droit. CSV. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">28</span><span class="t">Demandes de valeurs foncières, DVF (DGFiP, Etalab)</span></div>
+<div class="m">Etalab · CSV, carte interactive</div>
+<p class="r">Transactions immobilières issues des actes notariés, carte et fichiers par commune.</p>
+<p class="lim">Alsace-Moselle et Mayotte exclues.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>DGFiP, Etalab</dd><dt>Adresse</dt><dd><a href="https://app.dvf.etalab.gouv.fr/" target="_blank" rel="noopener">app.dvf.etalab.gouv.fr</a><br><a href="https://www.data.gouv.fr/pages/onboarding/dvf/" target="_blank" rel="noopener">data.gouv.fr › DVF</a></dd><dt>Nature des données</dt><dd>Transactions immobilières et foncières issues des actes notariés ; carte interactive et fichiers CSV par commune ou département.</dd><dt>Format</dt><dd>CSV.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Publication semestrielle.</dd><dt>Emprise et maille</dt><dd>Commune, département.</dd><dt>Système de coordonnées</dt><dd>WGS 84 pour les fichiers géolocalisés (à vérifier).</dd><dt>Limites connues</dt><dd>Alsace-Moselle et Mayotte exclues. Une mutation peut regrouper plusieurs biens : le prix au m² exige un nettoyage. DVF+ du Cerema est structuré en base mais DV3F reste réservé aux ayants droit.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://app.dvf.etalab.gouv.fr/" target="_blank" rel="noopener">app.dvf.etalab.gouv.fr</a> <a href="https://www.data.gouv.fr/pages/onboarding/dvf/" target="_blank" rel="noopener">data.gouv.fr › DVF</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-29" data-acces="DL" data-ok="1" data-text="Revenus, pauvreté et niveau de vie, Filosofi (Insee) Insee Revenus déclarés et disponibles, taux de pauvreté, à l&#x27;IRIS et au carreau. Revenus déclarés et disponibles, pauvreté et niveau de vie ; bases à l&#x27;IRIS (millésime 2021) et données au carreau de 200 m. Secret statistique sur les petites mailles ; millésime des revenus antérieur à l&#x27;année de diffusion. XLSX et CSV pour les bases IRIS. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">29</span><span class="t">Revenus, pauvreté et niveau de vie, Filosofi (Insee)</span></div>
+<div class="m">Insee · XLSX, CSV</div>
+<p class="r">Revenus déclarés et disponibles, taux de pauvreté, à l’IRIS et au carreau.</p>
+<p class="lim">Secret statistique.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Insee</dd><dt>Adresse</dt><dd><a href="https://www.insee.fr/fr/statistiques/8229323" target="_blank" rel="noopener">insee.fr › Filosofi 2021 (Iris)</a><br><a href="https://www.insee.fr/fr/statistiques/8735162" target="_blank" rel="noopener">carreaux de 200 m</a></dd><dt>Nature des données</dt><dd>Revenus déclarés et disponibles, pauvreté et niveau de vie ; bases à l’IRIS (millésime 2021) et données au carreau de 200 m.</dd><dt>Format</dt><dd>XLSX et CSV pour les bases IRIS.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Filosofi 2021, publié le 31 juillet 2024 ; géographie au 1er janvier 2022.</dd><dt>Emprise et maille</dt><dd>IRIS, carreau ; autres mailles selon les publications.</dd><dt>Système de coordonnées</dt><dd>Sans objet pour les bases IRIS.</dd><dt>Limites connues</dt><dd>Secret statistique sur les petites mailles ; millésime des revenus antérieur à l’année de diffusion.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.insee.fr/fr/statistiques/8229323" target="_blank" rel="noopener">insee.fr › Filosofi 2021 (Iris)</a> <a href="https://www.insee.fr/fr/statistiques/8735162" target="_blank" rel="noopener">carreaux de 200 m</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-30" data-acces="VIS DL" data-ok="1" data-text="Observatoire des territoires (ANCT) ANCT Indicateurs comparés entre territoires, cartes et exports. Indicateurs cartographiés pour comparer les territoires ; export de tableaux. Source de seconde main : les indicateurs reprennent des producteurs primaires (Insee, SDES) ; citer le producteur d&#x27;origine. Tableaux, cartes. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">30</span><span class="t">Observatoire des territoires (ANCT)</span></div>
+<div class="m">ANCT · indicateurs cartographiés</div>
+<p class="r">Indicateurs comparés entre territoires, cartes et exports.</p>
+<p class="lim">Se recoupe avec beaucoup d'autres sources primaires</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>ANCT</dd><dt>Adresse</dt><dd><a href="https://www.observatoire-des-territoires.gouv.fr/" target="_blank" rel="noopener">observatoire-des-territoires.gouv.fr</a></dd><dt>Nature des données</dt><dd>Indicateurs cartographiés pour comparer les territoires ; export de tableaux.</dd><dt>Format</dt><dd>Tableaux, cartes.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>À vérifier sur le site.</dd><dt>Millésime et fréquence</dt><dd>Selon les indicateurs.</dd><dt>Emprise et maille</dt><dd>Communes, EPCI, départements (selon l’indicateur).</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>Source de seconde main : les indicateurs reprennent des producteurs primaires (Insee, SDES) ; citer le producteur d’origine.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.observatoire-des-territoires.gouv.fr/" target="_blank" rel="noopener">observatoire-des-territoires.gouv.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article></div><p class="empty">Aucune source ne correspond aux filtres dans cette étape.</p></section><section class="step" id="etape-4" data-total="9" style="--c:var(--slate)"><header><span class="big">4</span><h2>Aménager, habiter, se déplacer</h2><p class="st">urbanisme, sols, logement, transports</p><p class="q">Que prévoit-on, que consomme-t-on, qui est desservi ?</p></header><div class="grid"><article class="src" id="src-31" data-acces="DL VIS WS" data-ok="1" data-text="Géoportail de l&#x27;urbanisme Ministère de l&#x27;urbanisme PLU, cartes communales, secteurs de sauvegarde : zonages et prescriptions. Documents d&#x27;urbanisme (PLU, cartes communales, secteurs de sauvegarde), zonages et prescriptions ; téléchargement par document. Qualité de numérisation variable ; la valeur réglementaire reste celle du document approuvé, non de la couche. Communes au règlement national d&#x27;urbanisme sans zonage. Formats SIG usuels. Téléchargement Consultation Service web">
+<details><summary>
+<div class="hd"><span class="n">31</span><span class="t">Géoportail de l’urbanisme</span></div>
+<div class="m">GPU · téléchargement par document</div>
+<p class="r">PLU, cartes communales, secteurs de sauvegarde : zonages et prescriptions.</p>
+<p class="lim">Le document approuvé fait foi.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Ministère de l’urbanisme</dd><dt>Adresse</dt><dd><a href="https://www.geoportail-urbanisme.gouv.fr/" target="_blank" rel="noopener">geoportail-urbanisme.gouv.fr</a></dd><dt>Nature des données</dt><dd>Documents d’urbanisme (PLU, cartes communales, secteurs de sauvegarde), zonages et prescriptions ; téléchargement par document.</dd><dt>Format</dt><dd>Formats SIG usuels.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation, Service web</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Selon la date d’approbation du document.</dd><dt>Emprise et maille</dt><dd>Commune ou intercommunalité couverte par un document.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Qualité de numérisation variable ; la valeur réglementaire reste celle du document approuvé, non de la couche. Communes au règlement national d’urbanisme sans zonage.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.geoportail-urbanisme.gouv.fr/" target="_blank" rel="noopener">geoportail-urbanisme.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Service web">FLUX</span></div></div>
+</article><article class="src" id="src-32" data-acces="API" data-ok="1" data-text="API Carto, module urbanisme (IGN) IGN Requêtes sur les documents d&#x27;urbanisme à partir d&#x27;une parcelle ou d&#x27;une géométrie. Requêtes par API sur les documents d&#x27;urbanisme. Mêmes limites que le Géoportail de l&#x27;urbanisme : qualité de numérisation variable, valeur réglementaire du document approuvé. JSON, GeoJSON. API">
+<details><summary>
+<div class="hd"><span class="n">32</span><span class="t">API Carto, module urbanisme (IGN)</span></div>
+<div class="m">IGN · API, requêtes par géométrie</div>
+<p class="r">Requêtes sur les documents d’urbanisme à partir d’une parcelle ou d’une géométrie.</p>
+<p class="lim">Mêmes limites que le GPU.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://data.gouv.fr/fr/dataservices/api-carto-module-geoportail-de-lurbanisme-gpu" target="_blank" rel="noopener">data.gouv.fr › API Carto</a><br><a href="https://apicarto.ign.fr/" target="_blank" rel="noopener">apicarto.ign.fr</a></dd><dt>Nature des données</dt><dd>Requêtes par API sur les documents d’urbanisme.</dd><dt>Format</dt><dd>JSON, GeoJSON.</dd><dt>Mode d’accès</dt><dd>API</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Reflète le GPU.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>WGS 84 en entrée et en sortie (à vérifier).</dd><dt>Limites connues</dt><dd>Mêmes limites que le Géoportail de l’urbanisme : qualité de numérisation variable, valeur réglementaire du document approuvé.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://data.gouv.fr/fr/dataservices/api-carto-module-geoportail-de-lurbanisme-gpu" target="_blank" rel="noopener">data.gouv.fr › API Carto</a> <a href="https://apicarto.ign.fr/" target="_blank" rel="noopener">apicarto.ign.fr</a></div><div class="chips"><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-33" data-acces="VIS DL" data-ok="1" data-text="Portail national de l&#x27;artificialisation (Cerema, ministères) Cerema, ministères Consommation d&#x27;espaces et artificialisation : tableau de bord, carte en ligne, outil MonDiagArtif. Suivi de la consommation d&#x27;espaces naturels, agricoles et forestiers et de l&#x27;artificialisation ; tableau de bord et carte en ligne ; outil MonDiagArtif. Consommation d&#x27;espaces et artificialisation sont deux mesures distinctes. Source : Fichiers fonciers, base fiscale ; les données parcellaires brutes restent réservées aux ayants droit. Tableaux, couches SIG. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">33</span><span class="t">Portail national de l’artificialisation (Cerema, ministères)</span></div>
+<div class="m">Cerema · tableau de bord, MonDiagArtif</div>
+<p class="r">Consommation d’espaces et artificialisation : tableau de bord, carte en ligne, outil MonDiagArtif.</p>
+<p class="lim">Le site de référence sur le ZAN.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Cerema, ministères</dd><dt>Adresse</dt><dd><a href="https://artificialisation.developpement-durable.gouv.fr/" target="_blank" rel="noopener">artificialisation.developpement-durable.gouv.fr</a></dd><dt>Nature des données</dt><dd>Suivi de la consommation d’espaces naturels, agricoles et forestiers et de l’artificialisation ; tableau de bord et carte en ligne ; outil MonDiagArtif.</dd><dt>Format</dt><dd>Tableaux, couches SIG.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Millésimes annuels.</dd><dt>Emprise et maille</dt><dd>Commune, EPCI.</dd><dt>Système de coordonnées</dt><dd>Selon les couches.</dd><dt>Limites connues</dt><dd>Consommation d’espaces et artificialisation sont deux mesures distinctes. Source : Fichiers fonciers, base fiscale ; les données parcellaires brutes restent réservées aux ayants droit.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://artificialisation.developpement-durable.gouv.fr/" target="_blank" rel="noopener">artificialisation.developpement-durable.gouv.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-34" data-acces="DL" data-ok="1" data-text="CONSOENAF 2011-2025 Cerema Flux annuels de consommation d&#x27;espaces de 2011 à 2025, à la commune et au carreau de 1 km. Flux annuels de consommation d&#x27;espaces naturels, agricoles et forestiers du 1er janvier 2011 au 1er janvier 2025, à la commune et au carreau de 1 km. Des ratios ont été recalculés le 24 juillet 2026 : vérifier la version téléchargée. Les données parcellaires brutes restent réservées aux ayants droit. Tableaux et couches SIG. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">34</span><span class="t">CONSOENAF 2011-2025</span></div>
+<div class="m">data.gouv.fr · tableaux, couches SIG</div>
+<p class="r">Flux annuels de consommation d’espaces de 2011 à 2025, à la commune et au carreau de 1 km.</p>
+<p class="lim">Téléchargement directe des données du portail</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Cerema</dd><dt>Adresse</dt><dd><a href="https://www.data.gouv.fr/datasets/6a01b9280dd2d45907e5fc61" target="_blank" rel="noopener">data.gouv.fr › CONSOENAF</a></dd><dt>Nature des données</dt><dd>Flux annuels de consommation d’espaces naturels, agricoles et forestiers du 1er janvier 2011 au 1er janvier 2025, à la commune et au carreau de 1 km.</dd><dt>Format</dt><dd>Tableaux et couches SIG.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>2011-2025 ; ratios recalculés le 24 juillet 2026.</dd><dt>Emprise et maille</dt><dd>Commune, carreau de 1 km.</dd><dt>Système de coordonnées</dt><dd>Selon les couches.</dd><dt>Limites connues</dt><dd>Des ratios ont été recalculés le 24 juillet 2026 : vérifier la version téléchargée. Les données parcellaires brutes restent réservées aux ayants droit.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.data.gouv.fr/datasets/6a01b9280dd2d45907e5fc61" target="_blank" rel="noopener">data.gouv.fr › CONSOENAF</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-35" data-acces="DL" data-ok="1" data-text="OCS GE Tarn 2020, 2022 et différentiel (IGN, OPenIG) IGN, OPenIG Couverture et usage du sol à précision métrique pour le Tarn, avec différentiel 2020-2022. Base vectorielle séparant couverture et usage du sol, précision métrique ; fichiers shapefile pour le Tarn. Nomenclature à deux dimensions à lire avant usage ; ne pas comparer des millésimes sans le différentiel fourni. Shapefile. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">35</span><span class="t">OCSGE (Occupation du Sol à Grande Echelle)</span></div>
+<div class="m">data.gouv.fr · shapefile</div>
+<p class="r">Couverture et usage du sol à précision métrique pour le Tarn, avec différentiel 2020-2022.</p>
+<p class="lim">Ne pas comparer sans le différentiel.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN, OPenIG</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_OCS-GE" target="_blank" rel="noopener">OCS GE IGN</a><br></dd><dt>Nature des données</dt><dd>Base vectorielle séparant couverture et usage du sol, précision métrique</dd><dt>Format</dt><dd>Shapefile.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Millésimes 2020 et 2022.</dd><dt>Emprise et maille</dt><dd>National</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) probable (à vérifier dans les métadonnées).</dd><dt>Limites connues</dt><dd>Nomenclature à deux dimensions à lire avant usage ; ne pas comparer des millésimes sans le différentiel fourni.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_OCS-GE" target="_blank" rel="noopener">OCS GE IGN</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-36" data-acces="DL" data-ok="1" data-text="Répertoire du parc locatif social, RPLS (SDES, Insee) SDES, Insee Parc locatif social à l&#x27;IRIS au 1er janvier 2025. Parc locatif social des bailleurs sociaux, diffusé au niveau IRIS par l&#x27;Insee. La page du SDES est surtout destinée aux bailleurs (spécifications, manuels) ; les données agrégées sont publiées par l&#x27;Insee et dans la publication annuelle du SDES. Parc privé peu documenté en open data. XLSX (environ 5 Mo) et ZIP. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">36</span><span class="t">Répertoire du parc locatif social, RPLS (SDES, Insee)</span></div>
+<div class="m">Insee · XLSX, ZIP</div>
+<p class="r">Parc locatif social (fichier détail) au 1er janvier 2025.</p>
+<p class="lim">Données typologiques. Pas de données de flux.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>SDES, Insee</dd><dt>Adresse</dt><dd><a href="https://www.statistiques.developpement-durable.gouv.fr/catalogue?page=datafile&datafileRid=f3c2f2cb-8fb1-40fd-8733-964247744c9a" target="_blank" rel="noopener">SDES - RPLS détail</a><br></dd><dt>Nature des données</dt><dd>Parc locatif social des bailleurs sociaux.</dd><dt>Format</dt><dd>XLSX (environ 5 Mo) et ZIP.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>RPLS au 1er janvier 2025.</dd><dt>Emprise et maille</dt><dd>Logement</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>La page du SDES est surtout destinée aux bailleurs (spécifications, manuels) ; les données agrégées sont publiées par l’Insee et dans la publication annuelle du SDES.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.statistiques.developpement-durable.gouv.fr/catalogue?page=datafile&datafileRid=f3c2f2cb-8fb1-40fd-8733-964247744c9a" target="_blank" rel="noopener">SDES-RPLS</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-37" data-acces="DL API" data-ok="1" data-text="Diagnostics de performance énergétique des logements (ADEME) ADEME DPE de logements existants depuis juillet 2021, avec un jeu pour la période antérieure. Diagnostics de performance énergétique de logements : jeu « depuis juillet 2021 » et jeu « avant juillet 2021 ». Les données brutes ne sont pas représentatives de l&#x27;ensemble du parc : seuls les logements diagnostiqués figurent dans le jeu. CSV ; API. Téléchargement API">
+<details><summary>
+<div class="hd"><span class="n">37</span><span class="t">Diagnostics de performance énergétique des logements (ADEME)</span></div>
+<div class="m">ADEME · CSV, API</div>
+<p class="r">DPE de logements existants depuis juillet 2021, avec un jeu pour la période antérieure.</p>
+<p class="lim">Logements diagnostiqués seulement.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>ADEME</dd><dt>Adresse</dt><dd><a href="https://data.ademe.fr/datasets/dpe03existant" target="_blank" rel="noopener">data.ademe.fr › DPE depuis juillet 2021</a><br><a href="https://data.ademe.fr/datasets/dpe-france" target="_blank" rel="noopener">DPE avant juillet 2021</a></dd><dt>Nature des données</dt><dd>Diagnostics de performance énergétique de logements : jeu « depuis juillet 2021 » et jeu « avant juillet 2021 ».</dd><dt>Format</dt><dd>CSV ; API.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Alimentation continue depuis le 1er juillet 2021.</dd><dt>Emprise et maille</dt><dd>Logements diagnostiqués.</dd><dt>Système de coordonnées</dt><dd>Selon le jeu.</dd><dt>Limites connues</dt><dd>Les données brutes ne sont pas représentatives de l’ensemble du parc : seuls les logements diagnostiqués figurent dans le jeu.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://data.ademe.fr/datasets/dpe03existant" target="_blank" rel="noopener">data.ademe.fr › DPE depuis juillet 2021</a> <a href="https://data.ademe.fr/datasets/dpe-france" target="_blank" rel="noopener">DPE avant juillet 2021</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-38" data-acces="DL API VIS" data-ok="1" data-text="Point d&#x27;accès national aux données de transport transport.data.gouv.fr Horaires GTFS, réseaux cyclables, zones à faibles émissions, bornes de recharge. Horaires de transport public (GTFS), réseaux cyclables, zones à faibles émissions, bornes de recharge ; téléchargement et API. Données déposées par les autorités organisatrices : couverture et fraîcheur hétérogènes. Le fichier national agrégé des points d&#x27;arrêt est déconseillé par ses producteurs. GTFS, CSV, GeoJSON ; API. Téléchargement API Consultation">
+<details><summary>
+<div class="hd"><span class="n">38</span><span class="t">Point d’accès national aux données de transport</span></div>
+<div class="m">PAN · GTFS, API</div>
+<p class="r">Horaires GTFS, réseaux cyclables, zones à faibles émissions, bornes de recharge.</p>
+<p class="lim">Couverture et fraîcheur hétérogènes.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>transport.data.gouv.fr</dd><dt>Adresse</dt><dd><a href="https://transport.data.gouv.fr/" target="_blank" rel="noopener">transport.data.gouv.fr</a><br><a href="https://www.data.gouv.fr/dataservices/le-point-dacces-national-aux-donnees-de-transport" target="_blank" rel="noopener">data.gouv.fr › PAN</a></dd><dt>Nature des données</dt><dd>Horaires de transport public (GTFS), réseaux cyclables, zones à faibles émissions, bornes de recharge ; téléchargement et API.</dd><dt>Format</dt><dd>GTFS, CSV, GeoJSON ; API.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API, Consultation</dd><dt>Licence</dt><dd>Licences ouvertes ; variables selon les jeux.</dd><dt>Millésime et fréquence</dt><dd>Fraîcheur variable selon les autorités organisatrices.</dd><dt>Emprise et maille</dt><dd>France, selon les autorités organisatrices.</dd><dt>Système de coordonnées</dt><dd>WGS 84 (EPSG:4326).</dd><dt>Limites connues</dt><dd>Données déposées par les autorités organisatrices : couverture et fraîcheur hétérogènes. Le fichier national agrégé des points d’arrêt est déconseillé par ses producteurs.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://transport.data.gouv.fr/" target="_blank" rel="noopener">transport.data.gouv.fr</a> <a href="https://www.data.gouv.fr/dataservices/le-point-dacces-national-aux-donnees-de-transport" target="_blank" rel="noopener">data.gouv.fr › PAN</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-39" data-acces="VIS DL" data-ok="1" data-text="Atlas des patrimoines et POP (ministère de la Culture) Ministère de la Culture Monuments protégés, sites patrimoniaux, patrimoine archéologique. Monuments protégés, sites patrimoniaux, patrimoine archéologique ; consultation et téléchargement géographique. Couches de protection, non d&#x27;inventaire exhaustif du bâti ancien. Couches SIG, tableaux. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">39</span><span class="t">Atlas des patrimoines et POP (ministère de la Culture)</span></div>
+<div class="m">Culture · consultation, téléchargement</div>
+<p class="r">Monuments protégés, sites patrimoniaux, patrimoine archéologique.</p>
+<p class="lim">Protection et inventaire</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Ministère de la Culture</dd><dt>Adresse</dt><dd><a href="https://pop.culture.gouv.fr/" target="_blank" rel="noopener">pop.culture.gouv.fr</a><br><a href="https://www.culture.gouv.fr/regions/drac-occitanie/ressources-documentaires/bases-de-donnees" target="_blank" rel="noopener">DRAC Occitanie</a><br></dd><dt>Nature des données</dt><dd>Monuments protégés, sites patrimoniaux, patrimoine archéologique ; consultation et téléchargement géographique.</dd><dt>Format</dt><dd>Couches SIG, tableaux.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>Variable selon les jeux (à vérifier).</dd><dt>Millésime et fréquence</dt><dd>Selon les couches.</dd><dt>Emprise et maille</dt><dd>France ; Occitanie via la DRAC.</dd><dt>Système de coordonnées</dt><dd>Selon les couches.</dd><dt>Limites connues</dt><dd>Couches de protection, non d’inventaire exhaustif du bâti ancien.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://pop.culture.gouv.fr/" target="_blank" rel="noopener">pop.culture.gouv.fr</a> <a href="https://www.culture.gouv.fr/regions/drac-occitanie/ressources-documentaires/bases-de-donnees" target="_blank" rel="noopener">DRAC Occitanie</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article></div><p class="empty">Aucune source ne correspond aux filtres dans cette étape.</p></section><section class="step" id="etape-5" data-total="10" style="--c:var(--slate)"><header><span class="big">5</span><h2>Milieux, risques, ressources</h2><p class="st">risques, eau, nature, climat</p><p class="q">Qui est exposé, que protège-t-on, quelles ressources ?</p></header><div class="grid"><article class="src" id="src-40" data-acces="DL WS API VIS" data-ok="1" data-text="Géorisques et API Géorisques (MTE, BRGM) MTE, BRGM Plans de prévention, argiles, mouvements de terrain, cavités, inondation, installations classées. Plans de prévention, retrait-gonflement des argiles, mouvements de terrain, cavités, territoires à risque d&#x27;inondation, installations classées. Exhaustivité non garantie selon les risques ; la base GASPAR décrit les risques par commune sans cartographie ; croiser avec les plans de prévention en vigueur. Le site signale des restrictions d&#x27;accès géographiques liées à des attaques informatiques. CSV ; services WMS et WFS ; API. Téléchargement Service web API Consultation">
+<details><summary>
+<div class="hd"><span class="n">40</span><span class="t">Géorisques et API Géorisques (MTE, BRGM)</span></div>
+<div class="m">Géorisques · CSV, WMS, WFS, API</div>
+<p class="r">Plans de prévention, argiles, mouvements de terrain, cavités, inondation, installations classées.</p>
+<p class="lim">Exhaustivité non garantie.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>MTE, BRGM</dd><dt>Adresse</dt><dd><a href="https://www.georisques.gouv.fr/donnees/bases-de-donnees" target="_blank" rel="noopener">georisques.gouv.fr/donnees</a><br><a href="https://www.data.gouv.fr/dataservices/api-georisques" target="_blank" rel="noopener">API Géorisques</a></dd><dt>Nature des données</dt><dd>Plans de prévention, retrait-gonflement des argiles, mouvements de terrain, cavités, territoires à risque d’inondation, installations classées.</dd><dt>Format</dt><dd>CSV ; services WMS et WFS ; API.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Service web, API, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Selon les bases.</dd><dt>Emprise et maille</dt><dd>France, communes et zonages.</dd><dt>Système de coordonnées</dt><dd>Selon les couches.</dd><dt>Limites connues</dt><dd>Exhaustivité non garantie selon les risques ; la base GASPAR décrit les risques par commune sans cartographie ; croiser avec les plans de prévention en vigueur. Le site signale des restrictions d’accès géographiques liées à des attaques informatiques.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.georisques.gouv.fr/donnees/bases-de-donnees" target="_blank" rel="noopener">georisques.gouv.fr/donnees</a> <a href="https://www.data.gouv.fr/dataservices/api-georisques" target="_blank" rel="noopener">API Géorisques</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Service web">FLUX</span><span class="chip s" title="API">API</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-41" data-acces="API" data-ok="1" data-text="Hub&#x27;Eau (OFB) Office français de la biodiversité Qualité des cours d&#x27;eau, hydrobiologie, services d&#x27;eau et d&#x27;assainissement. Qualité des cours d&#x27;eau, hydrobiologie, indicateurs des services d&#x27;eau et d&#x27;assainissement. Données de stations : couverture spatiale inégale ; choisir les paramètres avec le référentiel Sandre. CSV, JSON, GeoJSON. API">
+<details><summary>
+<div class="hd"><span class="n">41</span><span class="t">Hub’Eau (OFB)</span></div>
+<div class="m">OFB · API (CSV, JSON, GeoJSON)</div>
+<p class="r">Qualité des cours d’eau, hydrobiologie, services d’eau et d’assainissement.</p>
+<p class="lim">Couverture spatiale inégale.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Office français de la biodiversité</dd><dt>Adresse</dt><dd><a href="https://hubeau.eaufrance.fr/" target="_blank" rel="noopener">hubeau.eaufrance.fr</a><br><a href="https://www.data.gouv.fr/dataservices/hubeau-qualite-des-cours-deau" target="_blank" rel="noopener">data.gouv.fr › Hub’Eau</a></dd><dt>Nature des données</dt><dd>Qualité des cours d’eau, hydrobiologie, indicateurs des services d’eau et d’assainissement.</dd><dt>Format</dt><dd>CSV, JSON, GeoJSON.</dd><dt>Mode d’accès</dt><dd>API</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Séries chronologiques.</dd><dt>Emprise et maille</dt><dd>Stations de mesure, France.</dd><dt>Système de coordonnées</dt><dd>Selon l’API.</dd><dt>Limites connues</dt><dd>Données de stations : couverture spatiale inégale ; choisir les paramètres avec le référentiel Sandre.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://hubeau.eaufrance.fr/" target="_blank" rel="noopener">hubeau.eaufrance.fr</a> <a href="https://www.data.gouv.fr/dataservices/hubeau-qualite-des-cours-deau" target="_blank" rel="noopener">data.gouv.fr › Hub’Eau</a></div><div class="chips"><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-42" data-acces="VIS DL" data-ok="1" data-text="Naïades et Sandre Eaufrance Données de qualité de l&#x27;eau et référentiels pour choisir les paramètres. Données sur la qualité des eaux et référentiels Sandre qui nomment paramètres et unités. Données de stations : couverture spatiale inégale ; choisir les paramètres avec le référentiel Sandre. CSV, référentiels. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">42</span><span class="t">Naïades et Sandre</span></div>
+<div class="m">Eaufrance · référentiels, données</div>
+<p class="r">Données de qualité de l’eau et référentiels pour choisir les paramètres.</p>
+<p class="lim">Lire le référentiel avant usage.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Eaufrance</dd><dt>Adresse</dt><dd><a href="https://naiades.eaufrance.fr/" target="_blank" rel="noopener">naiades.eaufrance.fr</a><br><a href="https://www.sandre.eaufrance.fr/" target="_blank" rel="noopener">sandre.eaufrance.fr</a></dd><dt>Nature des données</dt><dd>Données sur la qualité des eaux et référentiels Sandre qui nomment paramètres et unités.</dd><dt>Format</dt><dd>CSV, référentiels.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Séries chronologiques.</dd><dt>Emprise et maille</dt><dd>Stations de mesure, France.</dd><dt>Système de coordonnées</dt><dd>Selon le jeu.</dd><dt>Limites connues</dt><dd>Données de stations : couverture spatiale inégale ; choisir les paramètres avec le référentiel Sandre.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://naiades.eaufrance.fr/" target="_blank" rel="noopener">naiades.eaufrance.fr</a> <a href="https://www.sandre.eaufrance.fr/" target="_blank" rel="noopener">sandre.eaufrance.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-43" data-acces="VIS DL" data-ok="1" data-text="SIEAG, portail des données sur l&#x27;eau du bassin Adour-Garonne Agence de l&#x27;eau Adour-Garonne Système d&#x27;information sur l&#x27;eau du bassin : catalogue de données et cartographie. Portail des données sur l&#x27;eau du bassin Adour-Garonne. Le contenu exact du catalogue et les formats de données sont à vérifier avant la séance. Selon les jeux. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">43</span><span class="t">SIEAG, portail des données sur l’eau du bassin Adour-Garonne</span></div>
+<div class="m">Adour-Garonne · portail de données</div>
+<p class="r">Système d’information sur l’eau du bassin : catalogue de données et cartographie.</p>
+<p class="lim">Échelle du bassin.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Agence de l’eau Adour-Garonne</dd><dt>Adresse</dt><dd><a href="https://adour-garonne.eaufrance.fr/" target="_blank" rel="noopener">adour-garonne.eaufrance.fr</a></dd><dt>Nature des données</dt><dd>Portail des données sur l’eau du bassin Adour-Garonne.</dd><dt>Format</dt><dd>Selon les jeux.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>À vérifier selon les jeux.</dd><dt>Millésime et fréquence</dt><dd>Selon les jeux.</dd><dt>Emprise et maille</dt><dd>Bassin Adour-Garonne.</dd><dt>Système de coordonnées</dt><dd>Selon les jeux.</dd><dt>Limites connues</dt><dd>Le contenu exact du catalogue et les formats de données sont à vérifier avant la séance.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://adour-garonne.eaufrance.fr/" target="_blank" rel="noopener">adour-garonne.eaufrance.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-44" data-acces="DL VIS" data-ok="1" data-text="Inventaire national du patrimoine naturel (INPN) MNHN ZNIEFF, sites Natura 2000, espaces protégés. Zones d&#x27;inventaire (ZNIEFF), sites Natura 2000, espaces protégés. Un périmètre ne mesure pas l&#x27;état de conservation du milieu. L&#x27;accueil du site signale une remise en service après une cyberattaque : vérifier la disponibilité des téléchargements. Couches SIG. Téléchargement Consultation">
+<details><summary>
+<div class="hd"><span class="n">44</span><span class="t">Inventaire national du patrimoine naturel (INPN)</span></div>
+<div class="m">INPN · couches SIG</div>
+<p class="r">ZNIEFF, sites Natura 2000, espaces protégés.</p>
+<p class="lim">Un périmètre n’est pas un état.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>MNHN</dd><dt>Adresse</dt><dd><a href="https://inpn.mnhn.fr/" target="_blank" rel="noopener">inpn.mnhn.fr</a></dd><dt>Nature des données</dt><dd>Zones d’inventaire (ZNIEFF), sites Natura 2000, espaces protégés.</dd><dt>Format</dt><dd>Couches SIG.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation</dd><dt>Licence</dt><dd>Variable selon les couches (à vérifier).</dd><dt>Millésime et fréquence</dt><dd>Mises à jour par couche.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>Selon les couches.</dd><dt>Limites connues</dt><dd>Un périmètre ne mesure pas l’état de conservation du milieu. L’accueil du site signale une remise en service après une cyberattaque : vérifier la disponibilité des téléchargements.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://inpn.mnhn.fr/" target="_blank" rel="noopener">inpn.mnhn.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-45" data-acces="DL" data-ok="1" data-text="Registre parcellaire graphique (IGN) IGN Îlots culturaux et cultures déclarés par les exploitants. Îlots culturaux déclarés. Le registre repose sur des déclarations d&#x27;aides. Couches SIG. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">45</span><span class="t">Registre parcellaire graphique (IGN)</span></div>
+<div class="m">IGN · couches SIG</div>
+<p class="r">Îlots culturaux et cultures déclarés par les exploitants.</p>
+<p class="lim">Données déclaratives (aides).</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_RPG" target="_blank" rel="noopener">cartes.gouv.fr › RPG</a></dd><dt>Nature des données</dt><dd>Îlots culturaux déclarés.</dd><dt>Format</dt><dd>Couches SIG.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Annuel.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Le registre repose sur des déclarations d’aides.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_RPG" target="_blank" rel="noopener">cartes.gouv.fr › RPG</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-46" data-acces="DL" data-ok="1" data-text="BD Forêt (IGN) IGN Peuplements forestiers : essences et formations végétales. Peuplements forestiers. Millésimes et mises à jour à vérifier avant usage. Couches SIG. Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">46</span><span class="t">BD Forêt (IGN)</span></div>
+<div class="m">IGN · couches SIG</div>
+<p class="r">Peuplements forestiers : essences et formations végétales.</p>
+<p class="lim">Millésimes départementaux hétérogènes.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>IGN</dd><dt>Adresse</dt><dd><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-FORET" target="_blank" rel="noopener">cartes.gouv.fr › BD Forêt</a></dd><dt>Nature des données</dt><dd>Peuplements forestiers.</dd><dt>Format</dt><dd>Couches SIG.</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>À vérifier sur la fiche du produit.</dd><dt>Emprise et maille</dt><dd>France, par département.</dd><dt>Système de coordonnées</dt><dd>Lambert-93 (EPSG:2154) pour la métropole.</dd><dt>Limites connues</dt><dd>Millésimes et mises à jour à vérifier avant usage.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://cartes.gouv.fr/rechercher-une-donnee/dataset/IGNF_BD-FORET" target="_blank" rel="noopener">cartes.gouv.fr › BD Forêt</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-47" data-acces="DL API" data-ok="1" data-text="Données publiques de Météo-France Météo-France Séries climatiques et observations. Séries climatiques. Maille et millésime variables. CSV ; API. Téléchargement API">
+<details><summary>
+<div class="hd"><span class="n">47</span><span class="t">Données publiques de Météo-France</span></div>
+<div class="m">meteo.data.gouv.fr · séries, API</div>
+<p class="r">Séries climatiques et observations.</p>
+<p class="lim">Maille et millésime variables.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Météo-France</dd><dt>Adresse</dt><dd><a href="https://meteo.data.gouv.fr/" target="_blank" rel="noopener">meteo.data.gouv.fr</a></dd><dt>Nature des données</dt><dd>Séries climatiques.</dd><dt>Format</dt><dd>CSV ; API.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API</dd><dt>Licence</dt><dd>Licence Ouverte (à vérifier).</dd><dt>Millésime et fréquence</dt><dd>Séries longues.</dd><dt>Emprise et maille</dt><dd>Stations.</dd><dt>Système de coordonnées</dt><dd>Selon le jeu.</dd><dt>Limites connues</dt><dd>Maille et millésime variables.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://meteo.data.gouv.fr/" target="_blank" rel="noopener">meteo.data.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-48" data-acces="VIS DL" data-ok="1" data-text="DRIAS, les futurs du climat Météo-France Projections climatiques régionalisées. Projections climatiques. Projections climatiques à citer avec le scénario retenu. Selon le service. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">48</span><span class="t">DRIAS, les futurs du climat</span></div>
+<div class="m">DRIAS · projections climatiques</div>
+<p class="r">Projections climatiques régionalisées.</p>
+<p class="lim">Citer le scénario retenu.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Météo-France</dd><dt>Adresse</dt><dd><a href="https://www.drias-climat.fr/" target="_blank" rel="noopener">drias-climat.fr</a></dd><dt>Nature des données</dt><dd>Projections climatiques.</dd><dt>Format</dt><dd>Selon le service.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>À vérifier sur le site.</dd><dt>Millésime et fréquence</dt><dd>Horizons de projection.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>Selon le service.</dd><dt>Limites connues</dt><dd>Projections climatiques à citer avec le scénario retenu.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.drias-climat.fr/" target="_blank" rel="noopener">drias-climat.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-49" data-acces="VIS DL" data-ok="1" data-text="Atmo Occitanie Atmo Occitanie Qualité de l&#x27;air en Occitanie. Qualité de l&#x27;air. Maille et millésime variables. Selon le portail. Consultation Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">49</span><span class="t">Atmo Occitanie</span></div>
+<div class="m">Atmo · portail de données</div>
+<p class="r">Qualité de l’air en Occitanie.</p>
+<p class="lim">Maille et millésime variables.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Atmo Occitanie</dd><dt>Adresse</dt><dd><a href="https://www.atmo-occitanie.org/" target="_blank" rel="noopener">atmo-occitanie.org</a></dd><dt>Nature des données</dt><dd>Qualité de l’air.</dd><dt>Format</dt><dd>Selon le portail.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement</dd><dt>Licence</dt><dd>À vérifier sur le site.</dd><dt>Millésime et fréquence</dt><dd>Selon les jeux.</dd><dt>Emprise et maille</dt><dd>Occitanie.</dd><dt>Système de coordonnées</dt><dd>Selon les jeux.</dd><dt>Limites connues</dt><dd>Maille et millésime variables.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.atmo-occitanie.org/" target="_blank" rel="noopener">atmo-occitanie.org</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article></div><p class="empty">Aucune source ne correspond aux filtres dans cette étape.</p></section><section class="step" id="etape-6" data-total="9" style="--c:var(--slate)"><header><span class="big">6</span><h2>Économie et services locaux</h2><p class="st">emploi, énergie, santé, portails locaux</p><p class="q">Quelle activité, quels services, quelles données locales ?</p></header><div class="grid"><article class="src" id="src-50" data-acces="VIS DL API" data-ok="1" data-text="Données locales de consommation d&#x27;énergie (SDES) SDES Électricité, gaz naturel, chaleur et froid, produits pétroliers, à la commune ou à l&#x27;IRIS selon l&#x27;énergie. Consommations locales d&#x27;électricité, de gaz naturel, de chaleur et de froid, et de produits pétroliers ; mailles commune, IRIS, EPCI, région selon l&#x27;énergie. La maille varie selon l&#x27;énergie : l&#x27;IRIS concerne l&#x27;électricité, le gaz et la chaleur et le froid ; les produits pétroliers sont à une maille plus large. Lire la note méthodologique avant usage. Explorateur avec format de téléchargement au choix ; API. Consultation Téléchargement API">
+<details><summary>
+<div class="hd"><span class="n">50</span><span class="t">Données locales de consommation d’énergie (SDES)</span></div>
+<div class="m">SDES · explorateur, API</div>
+<p class="r">Électricité, gaz naturel, chaleur et froid, produits pétroliers, à la commune ou à l’IRIS selon l’énergie.</p>
+<p class="lim">Maille variable selon l’énergie.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>SDES</dd><dt>Adresse</dt><dd><a href="https://www.statistiques.developpement-durable.gouv.fr/donnees-locales-de-consommation-denergie" target="_blank" rel="noopener">statistiques.developpement-durable.gouv.fr</a></dd><dt>Nature des données</dt><dd>Consommations locales d’électricité, de gaz naturel, de chaleur et de froid, et de produits pétroliers ; mailles commune, IRIS, EPCI, région selon l’énergie.</dd><dt>Format</dt><dd>Explorateur avec format de téléchargement au choix ; API.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement, API</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Dernière année disponible : 2024 (mise à jour du 1er octobre 2025).</dd><dt>Emprise et maille</dt><dd>Commune, IRIS, EPCI, région selon l’énergie.</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>La maille varie selon l’énergie : l’IRIS concerne l’électricité, le gaz et la chaleur et le froid ; les produits pétroliers sont à une maille plus large. Lire la note méthodologique avant usage.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.statistiques.developpement-durable.gouv.fr/donnees-locales-de-consommation-denergie" target="_blank" rel="noopener">statistiques.developpement-durable.gouv.fr</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-51" data-acces="DL VIS" data-ok="1" data-text="Agreste (ministère de l&#x27;Agriculture) Ministère de l&#x27;Agriculture Recensement agricole et statistiques agricoles. Recensement agricole. Secret statistique sur les petites mailles du recensement agricole. Tableaux. Téléchargement Consultation">
+<details><summary>
+<div class="hd"><span class="n">51</span><span class="t">Agreste (ministère de l’Agriculture)</span></div>
+<div class="m">Agreste · tableaux, recensement agricole</div>
+<p class="r">Recensement agricole et statistiques agricoles.</p>
+<p class="lim">Secret statistique.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Ministère de l’Agriculture</dd><dt>Adresse</dt><dd><a href="https://agreste.agriculture.gouv.fr/" target="_blank" rel="noopener">agreste.agriculture.gouv.fr</a></dd><dt>Nature des données</dt><dd>Recensement agricole.</dd><dt>Format</dt><dd>Tableaux.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte (à vérifier).</dd><dt>Millésime et fréquence</dt><dd>Recensement décennal.</dd><dt>Emprise et maille</dt><dd>Communes, cantons.</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>Secret statistique sur les petites mailles du recensement agricole.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://agreste.agriculture.gouv.fr/" target="_blank" rel="noopener">agreste.agriculture.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-52" data-acces="DL API VIS" data-ok="1" data-text="Urssaf, effectifs salariés (open.urssaf.fr) Urssaf Effectifs et établissements employeurs par commune. Effectifs et établissements employeurs par commune. Données déclaratives. CSV ; API. Téléchargement API Consultation">
+<details><summary>
+<div class="hd"><span class="n">52</span><span class="t">Urssaf, effectifs salariés (open.urssaf.fr)</span></div>
+<div class="m">Urssaf · CSV, API</div>
+<p class="r">Effectifs et établissements employeurs par commune.</p>
+<p class="lim">Données déclaratives.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Urssaf</dd><dt>Adresse</dt><dd><a href="https://open.urssaf.fr/" target="_blank" rel="noopener">open.urssaf.fr</a></dd><dt>Nature des données</dt><dd>Effectifs et établissements employeurs par commune.</dd><dt>Format</dt><dd>CSV ; API.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API, Consultation</dd><dt>Licence</dt><dd>Licence Ouverte (à vérifier).</dd><dt>Millésime et fréquence</dt><dd>Trimestriel ou annuel selon le jeu.</dd><dt>Emprise et maille</dt><dd>Commune.</dd><dt>Système de coordonnées</dt><dd>Sans objet.</dd><dt>Limites connues</dt><dd>Données déclaratives.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://open.urssaf.fr/" target="_blank" rel="noopener">open.urssaf.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article><article class="src" id="src-53" data-acces="DL API" data-ok="1" data-text="DATAtourisme Direction générale des entreprises Points d&#x27;intérêt touristiques. Points d&#x27;intérêt touristiques. Couverture touristique dépendante des offices locaux. Flux et fichiers. Téléchargement API">
+<details><summary>
+<div class="hd"><span class="n">53</span><span class="t">DATAtourisme</span></div>
+<div class="m">DATAtourisme · points d’intérêt</div>
+<p class="r">Points d’intérêt touristiques.</p>
+<p class="lim">Dépend des offices locaux.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Direction générale des entreprises</dd><dt>Adresse</dt><dd><a href="https://www.datatourisme.fr/" target="_blank" rel="noopener">datatourisme.fr</a></dd><dt>Nature des données</dt><dd>Points d’intérêt touristiques.</dd><dt>Format</dt><dd>Flux et fichiers.</dd><dt>Mode d’accès</dt><dd>Téléchargement, API</dd><dt>Licence</dt><dd>Variable selon les producteurs.</dd><dt>Millésime et fréquence</dt><dd>Mises à jour par les offices.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>Selon le flux.</dd><dt>Limites connues</dt><dd>Couverture touristique dépendante des offices locaux.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.datatourisme.fr/" target="_blank" rel="noopener">datatourisme.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-54" data-acces="DL" data-ok="1" data-text="FINESS, établissements sanitaires et sociaux (Agence du numérique en santé) Agence du numérique en santé Localisation des établissements sanitaires et sociaux : nouveau flux « Structures ». Localisation des établissements sanitaires et sociaux (flux « Structures » de l&#x27;Agence du numérique en santé). L&#x27;ancien jeu « Extraction du fichier des établissements » n&#x27;est plus mis à jour depuis le 4 mai 2026 : migrer vers les flux de l&#x27;Agence du numérique en santé. Format JSON compressé, à convertir pour un usage SIG ou tableur. À rapprocher de la BPE pour les comptages. JSON compressé (.json.gz). Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">54</span><span class="t">FINESS, établissements sanitaires et sociaux (Agence du numérique en santé)</span></div>
+<div class="m">data.gouv.fr · JSON compressé</div>
+<p class="r">Localisation des établissements sanitaires et sociaux : nouveau flux « Structures ».</p>
+<p class="lim">Description précise des établissements</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Agence du numérique en santé</dd><dt>Adresse</dt><dd><a href="https://www.data.gouv.fr/datasets/finess-structures-1" target="_blank" rel="noopener">data.gouv.fr › FINESS Structures</a></dd><dt>Nature des données</dt><dd>Localisation des établissements sanitaires et sociaux (flux « Structures » de l’Agence du numérique en santé).</dd><dt>Format</dt><dd>JSON compressé (.json.gz).</dd><dt>Mode d’accès</dt><dd>Téléchargement</dd><dt>Licence</dt><dd>Licence Ouverte (à vérifier sur la fiche).</dd><dt>Millésime et fréquence</dt><dd>Génération quotidienne annoncée sur la page du jeu.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>Selon le fichier.</dd><dt>Limites connues</dt><dd>L’ancien jeu « Extraction du fichier des établissements » n’est plus mis à jour depuis le 4 mai 2026 : migrer vers les flux de l’Agence du numérique en santé. Format JSON compressé, à convertir pour un usage SIG ou tableur. À rapprocher de la BPE pour les comptages.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://www.data.gouv.fr/datasets/finess-structures-1" target="_blank" rel="noopener">data.gouv.fr › FINESS Structures</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article><article class="src" id="src-55" data-acces="DL VIS API" data-ok="1" data-text="Données de l&#x27;éducation nationale Ministère de l&#x27;Éducation nationale Localisation des établissements d&#x27;enseignement. Localisation des établissements d&#x27;enseignement. À rapprocher de la BPE (section 6 du TD) pour les comptages. CSV. Téléchargement Consultation API">
+<details><summary>
+<div class="hd"><span class="n">55</span><span class="t">Données de l’éducation nationale</span></div>
+<div class="m">data.education.gouv.fr · CSV</div>
+<p class="r">Localisation des établissements d’enseignement.</p>
+<p class="lim">À rapprocher de la BPE.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Ministère de l’Éducation nationale</dd><dt>Adresse</dt><dd><a href="https://data.education.gouv.fr/" target="_blank" rel="noopener">data.education.gouv.fr</a></dd><dt>Nature des données</dt><dd>Localisation des établissements d’enseignement.</dd><dt>Format</dt><dd>CSV.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation, API</dd><dt>Licence</dt><dd>Licence Ouverte.</dd><dt>Millésime et fréquence</dt><dd>Annuel.</dd><dt>Emprise et maille</dt><dd>France.</dd><dt>Système de coordonnées</dt><dd>Selon le jeu.</dd><dt>Limites connues</dt><dd>À rapprocher de la BPE (section 6 du TD) pour les comptages.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://data.education.gouv.fr/" target="_blank" rel="noopener">data.education.gouv.fr</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="API">API</span></div></div>
+</article><article class="src" id="src-56" data-acces="VIS DL WS" data-ok="1" data-text="PICTO-Occitanie (services de l&#x27;État en région) Services de l&#x27;État en Occitanie Catalogue de données de l&#x27;État : DREAL, DRAAF, ARS, directions départementales. Catalogue de données de l&#x27;État (DREAL, DRAAF, ARS, directions départementales) ; statistiques thématiques. Les jeux régionaux peuvent dépasser le cadre départemental : filtrer sur le Tarn. Selon les jeux. Consultation Téléchargement Service web">
+<details><summary>
+<div class="hd"><span class="n">56</span><span class="t">PICTO-Occitanie (services de l’État en région)</span></div>
+<div class="m">PICTO · catalogue, PICTO-STAT</div>
+<p class="r">Catalogue de données de l’État : DREAL, DRAAF, ARS, directions départementales.</p>
+<p class="lim">Spécifique à la région Occitanie</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Services de l’État en Occitanie</dd><dt>Adresse</dt><dd><a href="https://catalogue.picto-occitanie.fr/geonetwork/srv/fre/catalog.search#/home" target="_blank" rel="noopener">catalogue.picto-occitanie.fr</a><br><a href="https://www.picto-occitanie.fr/geoclip/" target="_blank" rel="noopener">PICTO-STAT</a></dd><dt>Nature des données</dt><dd>Catalogue de données de l’État (DREAL, DRAAF, ARS, directions départementales) ; statistiques thématiques.</dd><dt>Format</dt><dd>Selon les jeux.</dd><dt>Mode d’accès</dt><dd>Consultation, Téléchargement, Service web</dd><dt>Licence</dt><dd>Variable selon les jeux.</dd><dt>Millésime et fréquence</dt><dd>Selon les jeux.</dd><dt>Emprise et maille</dt><dd>Région Occitanie.</dd><dt>Système de coordonnées</dt><dd>Selon les jeux.</dd><dt>Limites connues</dt><dd>Les jeux régionaux peuvent dépasser le cadre départemental : filtrer sur le Tarn.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://catalogue.picto-occitanie.fr/geonetwork/srv/fre/catalog.search#/home" target="_blank" rel="noopener">catalogue.picto-occitanie.fr</a> <a href="https://www.picto-occitanie.fr/geoclip/" target="_blank" rel="noopener">PICTO-STAT</a></div><div class="chips"><span class="chip s" title="Consultation">CARTE</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Service web">FLUX</span></div></div>
+</article><article class="src" id="src-58" data-acces="DL VIS" data-ok="1" data-text="Région Occitanie, agglomération de l&#x27;Albigeois et transports du Tarn sur data.gouv.fr Collectivités Jeux de la Région, de l&#x27;agglomération de l&#x27;Albigeois et transports du Tarn. Jeux publiés sur data.gouv.fr par la Région Occitanie (191 jeux), la Communauté d&#x27;agglomération de l&#x27;Albigeois (18 jeux, dont le GTFS, la base adresse locale d&#x27;Albi et le réseau cyclable) et jeux de transport du Tarn (11 jeux : transport public collectif, covoiturage, véhicules en libre-service). Aucun portail propre du Département du Tarn n&#x27;a été identifié lors de la vérification : à compléter si un portail existe. Les nombres de jeux évoluent. Selon les jeux. Téléchargement Consultation">
+<details><summary>
+<div class="hd"><span class="n">57</span><span class="t">Portail open data de la région Occitanie</span></div>
+<div class="m">data.gouv.fr · organisations et jeux locaux</div>
+<p class="r">Jeux de la Région, de l’agglomération de l’Albigeois et transports du Tarn.</p>
+<p class="lim">Portail du Département non identifié.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Collectivités</dd><dt>Adresse</dt><dd><a href="https://data.laregion.fr/pages/accueil/" target="_blank" rel="noopener">Région Occitanie</a><br></dd><dt>Nature des données</dt><dd>Jeux publiés par la Région Occitanie.</dd><dt>Format</dt><dd>Selon les jeux.</dd><dt>Mode d’accès</dt><dd>Téléchargement, Consultation</dd><dt>Licence</dt><dd>Variable selon les jeux.</dd><dt>Millésime et fréquence</dt><dd>Variable selon les jeux de données</dd><dt>Emprise et maille</dt><dd>Variable selon les jeux de données</dd><dt>Système de coordonnées</dt><dd>Selon les jeux.</dd><dt>Limites connues</dt><dd>A vérifier source par source.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://data.laregion.fr/pages/accueil/" target="_blank" rel="noopener">Région Occitanie</a></div><div class="chips"><span class="chip s" title="Téléchargement">TÉLÉCH.</span><span class="chip s" title="Consultation">CARTE</span></div></div>
+</article></div><p class="empty">Aucune source ne correspond aux filtres dans cette étape.</p></section></div><div class="group" style="--gc:var(--terra)"><div class="gband"><span>Étape 7</span><span>Les accès limités</span><span style="font-weight:400;opacity:.9">sur demande, ayants droit</span></div><section class="step" id="etape-7" data-total="3" style="--c:var(--terra)"><header><span class="big">7</span><h2>Accès limité</h2><p class="st">Cerema : foncier, marché, vacance</p><p class="q">Que ne voit-on pas en open data ?</p></header><div class="how"><h3>Comment obtenir l’accès ?</h3><ol><li><b><i>1</i>Identifier le statut</b>L’accès est réservé aux ayants droit : services de l’État et établissements publics, collectivités et leurs groupements, agences d’urbanisme, organismes d’aménagement.</li><li><b><i>2</i>Passer par une structure</b>Une collectivité, une agence ou un service partenaire (stage, apprentissage, convention de recherche) peut demander l’accès et encadrer l’usage.</li><li><b><i>3</i>Déposer la demande</b>La demande se dépose sur le portail Datafoncier du Cerema, avec un engagement sur les conditions d’usage. Les conditions exactes et les délais sont à confirmer sur le portail.</li><li><b><i>4</i>En attendant : l’open data</b>DVF et sa carte, CONSOENAF et le portail de l’artificialisation, LOVAC agrégé sur data.gouv.fr couvrent une large part des besoins d’un diagnostic.</li></ol></div><div class="grid"><article class="src" id="src-59" data-acces="RES" data-ok="1" data-text="Fichiers fonciers (Cerema, DGFiP) Cerema (Datafoncier) Propriétés bâties et non bâties, locaux et propriétaires, à la parcelle. Données issues de la taxation foncière : parcelles, locaux, propriétaires. Source de la consommation d&#x27;espaces diffusée en open data au niveau agrégé. Les données brutes ne sont pas diffusées en open data. La demande d&#x27;accès se fait sur le portail Datafoncier par un ayant droit ; un étudiant y accède par une structure partenaire (collectivité, agence, stage). Tables et base de données. Accès restreint">
+<details><summary>
+<div class="hd"><span class="n">58</span><span class="t">Fichiers fonciers (Cerema, DGFiP)</span></div>
+<div class="m">Cerema · tables, base de données</div>
+<p class="r">Propriétés bâties et non bâties, locaux et propriétaires, à la parcelle.</p>
+<p class="lim">Réservé aux ayants droit.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Cerema (Datafoncier)</dd><dt>Adresse</dt><dd><a href="https://datafoncier.cerema.fr/" target="_blank" rel="noopener">datafoncier.cerema.fr</a><br><a href="https://doc-datafoncier.cerema.fr/" target="_blank" rel="noopener">documentation Datafoncier</a></dd><dt>Nature des données</dt><dd>Données issues de la taxation foncière : parcelles, locaux, propriétaires. Source de la consommation d’espaces diffusée en open data au niveau agrégé.</dd><dt>Format</dt><dd>Tables et base de données.</dd><dt>Mode d’accès</dt><dd>Accès restreint</dd><dt>Licence</dt><dd>Accès réservé aux ayants droit, selon conditions d’usage.</dd><dt>Millésime et fréquence</dt><dd>Millésime annuel.</dd><dt>Emprise et maille</dt><dd>France, parcelle et local.</dd><dt>Système de coordonnées</dt><dd>Selon le fichier.</dd><dt>Limites connues</dt><dd>Les données brutes ne sont pas diffusées en open data. La demande d’accès se fait sur le portail Datafoncier par un ayant droit ; un étudiant y accède par une structure partenaire (collectivité, agence, stage).</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://datafoncier.cerema.fr/" target="_blank" rel="noopener">datafoncier.cerema.fr</a> <a href="https://doc-datafoncier.cerema.fr/" target="_blank" rel="noopener">documentation Datafoncier</a></div><div class="chips"><span class="chip s res" title="Accès restreint">RESTREINT</span></div></div>
+</article><article class="src" id="src-60" data-acces="RES" data-ok="1" data-text="DV3F, Demandes de valeurs foncières géolocalisées et enrichies (Cerema) Cerema (Datafoncier) Transactions de DVF enrichies : local, nature de la vente, parcelles rattachées. Plus riche que DVF en open data. DVF géolocalisé et enrichi par le Cerema, structuré en base de données. DV3F reste réservé aux ayants droit, alors que DVF est ouvert. DVF+ est la déclinaison structurée en base. Même démarche d&#x27;accès que pour les Fichiers fonciers. Base de données. Accès restreint">
+<details><summary>
+<div class="hd"><span class="n">59</span><span class="t">DV3F, Demandes de valeurs foncières géolocalisées et enrichies (Cerema)</span></div>
+<div class="m">Cerema · base structurée</div>
+<p class="r">Transactions de DVF enrichies : local, nature de la vente, parcelles rattachées. Plus riche que DVF en open data.</p>
+<p class="lim">Réservé aux ayants droit.</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Cerema (Datafoncier)</dd><dt>Adresse</dt><dd><a href="https://datafoncier.cerema.fr/" target="_blank" rel="noopener">datafoncier.cerema.fr</a></dd><dt>Nature des données</dt><dd>DVF géolocalisé et enrichi par le Cerema, structuré en base de données.</dd><dt>Format</dt><dd>Base de données.</dd><dt>Mode d’accès</dt><dd>Accès restreint</dd><dt>Licence</dt><dd>Accès réservé aux ayants droit.</dd><dt>Millésime et fréquence</dt><dd>Suit le rythme de publication de DVF.</dd><dt>Emprise et maille</dt><dd>France, hors Alsace-Moselle et Mayotte.</dd><dt>Système de coordonnées</dt><dd>Selon le fichier.</dd><dt>Limites connues</dt><dd>DV3F reste réservé aux ayants droit, alors que DVF est ouvert. DVF+ est la déclinaison structurée en base. Même démarche d’accès que pour les Fichiers fonciers.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://datafoncier.cerema.fr/" target="_blank" rel="noopener">datafoncier.cerema.fr</a></div><div class="chips"><span class="chip s res" title="Accès restreint">RESTREINT</span></div></div>
+</article><article class="src" id="src-61" data-acces="RES DL" data-ok="1" data-text="LOVAC, logements vacants du parc privé (Cerema, DGFiP) Cerema, DGFiP Vacance des logements du parc privé : fichier détaillé réservé, comptages agrégés par commune en open data. Fichier de la vacance des logements du parc privé issu de la taxation. Le détail est réservé ; des comptages agrégés par commune, département et région sont en open data. Le détail est soumis à la secrétisation (11 logements) et l&#x27;accès au fichier détaillé est réservé aux ayants droit ; les comptages open data sont à privilégier pour un travail d&#x27;étudiant. Fichier réservé ; agrégats en CSV. Accès restreint Téléchargement">
+<details><summary>
+<div class="hd"><span class="n">60</span><span class="t">LOVAC, logements vacants du parc privé (Cerema, DGFiP)</span></div>
+<div class="m">Cerema · fichier réservé, agrégats ouverts</div>
+<p class="r">Vacance des logements du parc privé : fichier détaillé réservé, comptages agrégés par commune en open data.</p>
+<p class="lim">Secret statistique (11 logements).</p>
+<div class="more"><span class="o">Afficher la fiche complète</span><span class="c">Replier la fiche</span></div>
+</summary>
+<div class="body"><dl><dt>Producteur</dt><dd>Cerema, DGFiP</dd><dt>Adresse</dt><dd><a href="https://datafoncier.cerema.fr/" target="_blank" rel="noopener">datafoncier.cerema.fr</a><br><a href="https://www.data.gouv.fr/datasets/61816c6e23197bb34835228e" target="_blank" rel="noopener">data.gouv.fr › LOVAC agrégé</a></dd><dt>Nature des données</dt><dd>Fichier de la vacance des logements du parc privé issu de la taxation. Le détail est réservé ; des comptages agrégés par commune, département et région sont en open data.</dd><dt>Format</dt><dd>Fichier réservé ; agrégats en CSV.</dd><dt>Mode d’accès</dt><dd>Accès restreint, Téléchargement</dd><dt>Licence</dt><dd>Fichier détaillé réservé ; agrégats en licence ouverte.</dd><dt>Millésime et fréquence</dt><dd>Millésimes annuels.</dd><dt>Emprise et maille</dt><dd>Commune (agrégats) ; logement (fichier réservé).</dd><dt>Système de coordonnées</dt><dd>Selon le fichier.</dd><dt>Limites connues</dt><dd>Le détail est soumis à la secrétisation (11 logements) et l’accès au fichier détaillé est réservé aux ayants droit ; les comptages open data sont à privilégier pour un travail d’étudiant.</dd></dl></div></details>
+<div class="foot"><div class="links"><a href="https://datafoncier.cerema.fr/" target="_blank" rel="noopener">datafoncier.cerema.fr</a> <a href="https://www.data.gouv.fr/datasets/61816c6e23197bb34835228e" target="_blank" rel="noopener">data.gouv.fr › LOVAC agrégé</a></div><div class="chips"><span class="chip s res" title="Accès restreint">RESTREINT</span><span class="chip s" title="Téléchargement">TÉLÉCH.</span></div></div>
+</article></div><p class="empty">Aucune source ne correspond aux filtres dans cette étape.</p></section></div>
+<aside class="legend"><strong>Modes d’accès</strong><dl><dt><span class="chip s" title="Téléchargement">TÉLÉCH.</span></dt><dd>fichier à télécharger (archive, CSV, formats SIG)</dd><dt><span class="chip s" title="Service web">FLUX</span></dt><dd>service web à charger dans un SIG (WMS, WMTS, WFS)</dd><dt><span class="chip s" title="API">API</span></dt><dd>requête programmable (R, Python, navigateur)</dd><dt><span class="chip s" title="Consultation">CARTE</span></dt><dd>consultation en ligne : visualiseur, explorateur, carte interactive</dd><dt><span class="chip s res" title="Accès restreint">RESTREINT</span></dt><dd>accès réservé aux ayants droit</dd></dl>
+<p>60 sources · catalogue établi et adresses contrôlées le 20 octobre 2026 · Les licences et conditions d’usage sont à vérifier sur la page de chaque producteur avant toute réutilisation.</p></aside>
+</main>
+<script>
+(function(){
+  var cards=[].slice.call(document.querySelectorAll('article.src'));
+  var q=document.getElementById('q'), vrf=document.getElementById('vrf');
+  var chips=[].slice.call(document.querySelectorAll('button.chip[data-mode]'));
+  var cnt=document.getElementById('count');
+  function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+  function apply(){
+    var term=norm(q.value.trim()), modes=chips.filter(function(c){return c.getAttribute('aria-pressed')==='true'}).map(function(c){return c.dataset.mode});
+    var only=vrf.checked, shown=0;
+    cards.forEach(function(a){
+      var ok=true;
+      if(term && norm(a.dataset.text).indexOf(term)<0) ok=false;
+      if(ok && modes.length){var m=a.dataset.acces.split(' ');ok=modes.some(function(x){return m.indexOf(x)>=0});}
+      if(ok && only && a.dataset.ok!=='1') ok=false;
+      a.hidden=!ok; if(ok) shown++;
+    });
+    document.querySelectorAll('section.step').forEach(function(s){
+      var n=s.querySelectorAll('article.src:not([hidden])').length;
+      s.querySelector('.empty').style.display=n?'none':'block';
+      var rc=document.querySelector('.rail a[href="#'+s.id+'"] .cnt'); if(rc) rc.textContent=n+' / '+s.dataset.total+' sources';
+    });
+    cnt.textContent=shown+' source'+(shown>1?'s':'')+' affichée'+(shown>1?'s':'')+' sur '+cards.length;
+  }
+  q.addEventListener('input',apply); vrf.addEventListener('change',apply);
+  chips.forEach(function(c){c.addEventListener('click',function(){c.setAttribute('aria-pressed',c.getAttribute('aria-pressed')==='true'?'false':'true');apply();});});
+  document.getElementById('reset').addEventListener('click',function(){q.value='';vrf.checked=false;chips.forEach(function(c){c.setAttribute('aria-pressed','false')});apply();});
+  function setAll(v){document.querySelectorAll('article.src details').forEach(function(d){d.open=v});}
+  document.getElementById('open-all').addEventListener('click',function(){setAll(true)});
+  document.getElementById('close-all').addEventListener('click',function(){setAll(false)});
+  window.addEventListener('beforeprint',function(){setAll(true)});
+  var th=document.getElementById('theme');
+  th.addEventListener('click',function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+    th.setAttribute('aria-pressed',String(!dark));
+  });
+  function barh(){var b=document.querySelector('.bar');document.documentElement.style.setProperty('--barh',(b.offsetHeight+8)+'px');}
+  barh(); window.addEventListener('resize',barh); window.addEventListener('load',barh);
+  apply();
+})();
+</script>
+</body>
+</html>
